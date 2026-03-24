@@ -36,7 +36,7 @@ Create `.env.local` file in the project root:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ai_customer_support
+POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/ai_customer_support
 
 # OpenAI (for AI features)
 OPENAI_API_KEY=your_openai_api_key_here
@@ -315,7 +315,7 @@ ai-customer-support/
 2. Import project to [Vercel](https://vercel.com)
 3. Add Vercel Postgres database
 4. Set environment variables:
-   - `DATABASE_URL` - from Vercel Postgres
+   - `POSTGRES_URL` - from Vercel Postgres
    - `OPENAI_API_KEY`
    - `LANGCHAIN_API_KEY` (optional)
 5. Deploy!
@@ -324,7 +324,7 @@ ai-customer-support/
 
 ```bash
 # Option 1: Local with production URL
-DATABASE_URL="postgresql://...vercel.com/..." npm run seed:clear
+POSTGRES_URL="postgresql://...vercel.com/..." npm run seed:clear
 
 # Option 2: Create API endpoint /api/seed (see docs)
 ```

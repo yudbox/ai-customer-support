@@ -18,7 +18,7 @@ if (process.env.NODE_ENV !== "production") {
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  url: process.env.DATABASE_URL,
+  url: process.env.POSTGRES_URL,
   synchronize: false, // ⚠️ false в production! Используем migrations
   logging: process.env.NODE_ENV === "development",
   entities: [

@@ -15,9 +15,10 @@ const { resolve } = require("path");
 config({ path: resolve(process.cwd(), ".env.local") });
 
 // Data source ДЛЯ CLI КОМАНД (migration:run, migration:generate)
-export const AppDataSource = new DataSource({
+// ⚠️ TypeORM CLI требует ТОЛЬКО default export (no named export!)
+const AppDataSource = new DataSource({
   type: "postgres",
-  url: process.env.DATABASE_URL,
+  url: process.env.POSTGRES_URL,
   synchronize: false,
   logging: true, // Включаем логи для CLI
   entities: [
