@@ -47,7 +47,7 @@ export class Ticket {
   @Column({ type: "varchar", length: 50, unique: true })
   ticket_number: string;
 
-  @ManyToOne("Customer", "tickets", {
+  @ManyToOne(() => require("./Customer").Customer, "tickets", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "customer_id" })
@@ -56,7 +56,7 @@ export class Ticket {
   @Column({ type: "uuid" })
   customer_id: string;
 
-  @ManyToOne("Order", "tickets", {
+  @ManyToOne(() => require("./Order").Order, "tickets", {
     nullable: true,
     onDelete: "SET NULL",
   })
@@ -138,6 +138,6 @@ export class Ticket {
   resolved_at?: Date;
 
   // Relations
-  @OneToMany("Refund", "ticket")
+  @OneToMany(() => require("./Refund").Refund, "ticket")
   refunds: Refund[];
 }

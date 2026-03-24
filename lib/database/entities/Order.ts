@@ -39,7 +39,7 @@ export class Order {
   @Column({ type: "varchar", length: 50, unique: true })
   order_number: string;
 
-  @ManyToOne("Customer", "orders", {
+  @ManyToOne(() => require("./Customer").Customer, "orders", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "customer_id" })
@@ -77,12 +77,12 @@ export class Order {
   created_at: Date;
 
   // Relations
-  @OneToMany("Shipment", "order", { cascade: true })
+  @OneToMany(() => require("./Shipment").Shipment, "order", { cascade: true })
   shipments: Shipment[];
 
-  @OneToMany("Ticket", "order")
+  @OneToMany(() => require("./Ticket").Ticket, "order")
   tickets: Ticket[];
 
-  @OneToMany("Refund", "order", { cascade: true })
+  @OneToMany(() => require("./Refund").Refund, "order", { cascade: true })
   refunds: Refund[];
 }

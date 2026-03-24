@@ -24,7 +24,7 @@ export class Refund {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @ManyToOne("Order", "refunds", {
+  @ManyToOne(() => require("./Order").Order, "refunds", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "order_id" })
@@ -33,7 +33,7 @@ export class Refund {
   @Column({ type: "uuid" })
   order_id: string;
 
-  @ManyToOne("Ticket", "refunds", {
+  @ManyToOne(() => require("./Ticket").Ticket, "refunds", {
     nullable: true,
     onDelete: "SET NULL",
   })

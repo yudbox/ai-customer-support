@@ -56,9 +56,9 @@ export class Customer {
   created_at: Date;
 
   // Relations
-  @OneToMany("Order", "customer", { cascade: true })
+  @OneToMany(() => require("./Order").Order, "customer", { cascade: true })
   orders: Order[];
 
-  @OneToMany("Ticket", "customer", { cascade: true })
+  @OneToMany(() => require("./Ticket").Ticket, "customer", { cascade: true })
   tickets: Ticket[];
 }

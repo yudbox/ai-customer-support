@@ -33,7 +33,7 @@ export class Shipment {
   @Column({ type: "varchar", length: 100, unique: true })
   tracking_number: string;
 
-  @ManyToOne("Order", "shipments", {
+  @ManyToOne(() => require("./Order").Order, "shipments", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "order_id" })
