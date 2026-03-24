@@ -9,18 +9,17 @@ import { Category } from "./entities/Category";
 import { Team } from "./entities/Team";
 import { Refund } from "./entities/Refund";
 
-// Load .env.local только локально (на Vercel env vars автоматически доступны)
-if (process.env.NODE_ENV !== "production") {
-  const { config } = require("dotenv");
-  const { resolve } = require("path");
-  config({ path: resolve(process.cwd(), ".env.local") });
-}
+// Load .env.local для CLI команд
+const { config } = require("dotenv");
+const { resolve } = require("path");
+config({ path: resolve(process.cwd(), ".env.local") });
 
+// Data source ДЛЯ CLI КОМАНД (migration:run, migration:generate)
 export const AppDataSource = new DataSource({
   type: "postgres",
   url: process.env.DATABASE_URL,
-  synchronize: false, // ⚠️ false в production! Используем migrations
-  logging: process.env.NODE_ENV === "development",
+  synchronize: false,
+  logging: true, // Включаем логи для CLI
   entities: [
     Customer,
     Order,
@@ -31,8 +30,9 @@ export const AppDataSource = new DataSource({
     Team,
     Refund,
   ],
-  // Migrations НЕ нужны в Next.js runtime
-  // Используются только в CLI командах (npm run migration:run)
-  migrations: [],
+  // В CLI можем использовать glob patterns
+  migrations: ["lib/database/migrations/*.ts"],
   subscribers: [],
 });
+
+export default AppDataSource;

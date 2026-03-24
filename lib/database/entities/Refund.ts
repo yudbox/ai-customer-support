@@ -7,8 +7,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { Order } from "./Order";
-import { Ticket } from "./Ticket";
+import type { Order } from "./Order";
+import type { Ticket } from "./Ticket";
 
 export enum RefundStatus {
   PENDING = "pending",
@@ -24,7 +24,7 @@ export class Refund {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @ManyToOne(() => Order, (order) => order.refunds, {
+  @ManyToOne("Order", "refunds", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "order_id" })
@@ -33,7 +33,7 @@ export class Refund {
   @Column({ type: "uuid" })
   order_id: string;
 
-  @ManyToOne(() => Ticket, (ticket) => ticket.refunds, {
+  @ManyToOne("Ticket", "refunds", {
     nullable: true,
     onDelete: "SET NULL",
   })

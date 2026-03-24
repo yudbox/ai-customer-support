@@ -6,8 +6,8 @@ import {
   Index,
   OneToMany,
 } from "typeorm";
-import { Order } from "./Order";
-import { Ticket } from "./Ticket";
+import type { Order } from "./Order";
+import type { Ticket } from "./Ticket";
 
 export enum CustomerTier {
   VIP = "VIP",
@@ -56,9 +56,9 @@ export class Customer {
   created_at: Date;
 
   // Relations
-  @OneToMany(() => Order, (order) => order.customer, { cascade: true })
+  @OneToMany("Order", "customer", { cascade: true })
   orders: Order[];
 
-  @OneToMany(() => Ticket, (ticket) => ticket.customer, { cascade: true })
+  @OneToMany("Ticket", "customer", { cascade: true })
   tickets: Ticket[];
 }

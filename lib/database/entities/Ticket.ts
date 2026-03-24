@@ -8,9 +8,9 @@ import {
   OneToMany,
   JoinColumn,
 } from "typeorm";
-import { Customer } from "./Customer";
-import { Order } from "./Order";
-import { Refund } from "./Refund";
+import type { Customer } from "./Customer";
+import type { Order } from "./Order";
+import type { Refund } from "./Refund";
 
 export enum TicketStatus {
   OPEN = "open",
@@ -47,7 +47,7 @@ export class Ticket {
   @Column({ type: "varchar", length: 50, unique: true })
   ticket_number: string;
 
-  @ManyToOne(() => Customer, (customer) => customer.tickets, {
+  @ManyToOne("Customer", "tickets", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "customer_id" })
@@ -56,7 +56,7 @@ export class Ticket {
   @Column({ type: "uuid" })
   customer_id: string;
 
-  @ManyToOne(() => Order, (order) => order.tickets, {
+  @ManyToOne("Order", "tickets", {
     nullable: true,
     onDelete: "SET NULL",
   })
@@ -138,6 +138,6 @@ export class Ticket {
   resolved_at?: Date;
 
   // Relations
-  @OneToMany(() => Refund, (refund) => refund.ticket)
+  @OneToMany("Refund", "ticket")
   refunds: Refund[];
 }

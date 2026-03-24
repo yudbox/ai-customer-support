@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { Order } from "./Order";
+import type { Order } from "./Order";
 
 export enum ShipmentStatus {
   IN_TRANSIT = "in_transit",
@@ -33,7 +33,7 @@ export class Shipment {
   @Column({ type: "varchar", length: 100, unique: true })
   tracking_number: string;
 
-  @ManyToOne(() => Order, (order) => order.shipments, {
+  @ManyToOne("Order", "shipments", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "order_id" })

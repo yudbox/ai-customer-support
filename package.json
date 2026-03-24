@@ -9,9 +9,9 @@
     "lint": "eslint",
     "typeorm": "typeorm-ts-node-commonjs",
     "db:test": "tsx scripts/test-db-connection.ts",
-    "migration:generate": "tsx ./node_modules/typeorm/cli.js migration:generate -d lib/database/data-source.ts",
-    "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d lib/database/data-source.ts",
-    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d lib/database/data-source.ts",
+    "migration:generate": "tsx ./node_modules/typeorm/cli.js migration:generate -d lib/database/data-source-cli.ts",
+    "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d lib/database/data-source-cli.ts",
+    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d lib/database/data-source-cli.ts",
     "seed": "tsx scripts/seed-database.ts",
     "seed:clear": "tsx scripts/seed-database.ts --clear",
     "generate:customers": "tsx scripts/generate-customers.ts"

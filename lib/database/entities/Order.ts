@@ -8,10 +8,10 @@ import {
   OneToMany,
   JoinColumn,
 } from "typeorm";
-import { Customer } from "./Customer";
-import { Ticket } from "./Ticket";
-import { Shipment } from "./Shipment";
-import { Refund } from "./Refund";
+import type { Customer } from "./Customer";
+import type { Ticket } from "./Ticket";
+import type { Shipment } from "./Shipment";
+import type { Refund } from "./Refund";
 
 export enum OrderStatus {
   PENDING = "pending",
@@ -39,7 +39,7 @@ export class Order {
   @Column({ type: "varchar", length: 50, unique: true })
   order_number: string;
 
-  @ManyToOne(() => Customer, {
+  @ManyToOne("Customer", "orders", {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "customer_id" })
@@ -77,12 +77,12 @@ export class Order {
   created_at: Date;
 
   // Relations
-  @OneToMany(() => Shipment, (shipment) => shipment.order, { cascade: true })
+  @OneToMany("Shipment", "order", { cascade: true })
   shipments: Shipment[];
 
-  @OneToMany(() => Ticket, (ticket) => ticket.order)
+  @OneToMany("Ticket", "order")
   tickets: Ticket[];
 
-  @OneToMany(() => Refund, (refund) => refund.order, { cascade: true })
+  @OneToMany("Refund", "order", { cascade: true })
   refunds: Refund[];
 }
