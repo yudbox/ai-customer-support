@@ -16,9 +16,42 @@ if (process.env.NODE_ENV !== "production") {
   config({ path: resolve(process.cwd(), ".env.local") });
 }
 
+// Парсим URL или используем прямые параметры
+function getDatabaseConfig() {
+  const host = process.env.POSTGRES_HOST;
+  const port = process.env.POSTGRES_PORT;
+  const username = process.env.POSTGRES_USER;
+  const password = process.env.POSTGRES_PASSWORD;
+  const database = process.env.POSTGRES_DATABASE;
+
+  // Валидация: все переменные обязательны
+  if (!host || !port || !username || !password || !database) {
+    throw new Error("Missing required database environment variables.");
+  }
+
+  // Определяем локальная ли БД по хосту
+  const isLocalDb =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("db");
+
+  return {
+    host,
+    port: parseInt(port),
+    username,
+    password,
+    database,
+    ssl: !isLocalDb
+      ? {
+          rejectUnauthorized: true, // verify-full mode (устраняет warning)
+        }
+      : false, // Локальный Docker без SSL
+  };
+}
+
 export const AppDataSource = new DataSource({
   type: "postgres",
-  url: process.env.POSTGRES_URL,
+  ...getDatabaseConfig(),
   synchronize: false, // ⚠️ false в production! Используем migrations
   logging: process.env.NODE_ENV === "development",
   entities: [
