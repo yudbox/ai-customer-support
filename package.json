@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "type": "tsc --noEmit",
     "typeorm": "typeorm-ts-node-commonjs",
     "db:test": "tsx scripts/test-db-connection.ts",
     "migration:generate": "tsx ./node_modules/typeorm/cli.js migration:generate -d lib/database/data-source-cli.ts",
@@ -18,7 +19,13 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.95.2",
+    "@trpc/client": "^11.15.0",
+    "@trpc/next": "^11.15.0",
+    "@trpc/react-query": "^11.15.0",
+    "@trpc/server": "^11.15.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "next": "16.2.1",
     "pg": "^8.20.0",
     "react": "19.2.4",
@@ -28,7 +35,7 @@
     "tailwind-merge": "^3.5.0",
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
-    "yup": "^1.7.1"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.3.0",

@@ -1,0 +1,10 @@
+{
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": ".github/copilot-instructions.md"
+    },
+    {
+      "text": "🚨 CRITICAL: NEVER modify database schema directly! Always ask user first, then use TypeORM migrations. No direct ALTER TABLE commands."
+    }
+  ]
+}

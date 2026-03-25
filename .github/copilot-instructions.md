@@ -104,6 +104,57 @@ import { HomePage } from "@/app/page";
 - Use `React.FC` sparingly (prefer explicit props typing)
 - Enable strict mode in tsconfig.json
 
+## Database Schema Changes
+
+**🚨 CRITICAL RULE: NEVER modify database schema directly!**
+
+**❌ FORBIDDEN:**
+
+```bash
+# ❌ DO NOT run direct ALTER TABLE commands
+docker exec -it ai-customer-support-db psql ... -c "ALTER TABLE ..."
+```
+
+**✅ CORRECT WORKFLOW:**
+
+1. **Discuss first**: Always ask user before any schema changes
+2. **Update entity**: Modify TypeORM entity file (`lib/database/entities/*.ts`)
+3. **Create migration**: Use TypeORM migration system
+4. **Get approval**: User reviews migration file
+5. **Run migration**: User executes migration when ready
+
+**Example correct flow:**
+
+```typescript
+// 1. Update entity (ONLY with user approval)
+@Entity("tickets")
+export class Ticket {
+  @Column({ type: "text", nullable: true })
+  new_field?: string; // ← Ask first!
+}
+
+// 2. Generate migration (user's decision)
+// npm run migration:generate -- -n AddNewFieldToTickets
+
+// 3. Review migration SQL (user checks)
+
+// 4. Apply migration (user runs)
+// npm run migration:run
+```
+
+**Why this matters:**
+
+- Database changes are **permanent** and affect production
+- Schema changes require **team consensus**
+- Migrations provide **version control** for database
+- Direct ALTER TABLE bypasses **rollback capability**
+
+**If you need schema changes:**
+
+1. **Stop and ask**: "Do you want me to add field X to table Y?"
+2. **Wait for approval**: User decides yes/no
+3. **Follow migration workflow**: Never use direct SQL
+
 ## Naming Conventions
 
 - **Components**: PascalCase (e.g., `TicketForm`, `UserProfile`)

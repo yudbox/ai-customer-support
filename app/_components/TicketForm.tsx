@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,17 +15,22 @@ import {
   ticketFormSchema,
   type TicketFormData,
 } from "@/lib/validations/ticket-form-schema";
+import { trpc } from "@/lib/trpc/client";
 
-export function TicketForm() {
+interface TicketFormProps {
+  onSubmitSuccess?: (ticketId: string) => void;
+}
+
+export function TicketForm({ onSubmitSuccess }: TicketFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
     setValue,
     watch,
   } = useForm<TicketFormData>({
-    resolver: yupResolver(ticketFormSchema),
+    resolver: zodResolver(ticketFormSchema),
     defaultValues: {
       email: "",
       subject: "",
@@ -34,46 +39,25 @@ export function TicketForm() {
   });
 
   const [selectedScenario, setSelectedScenario] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  // tRPC mutation для создания тикета
+  const createTicketMutation = trpc.tickets.create.useMutation({
+    onSuccess: (data) => {
+      // Notify parent component
+      if (onSubmitSuccess) {
+        onSubmitSuccess(data.id);
+      }
+      reset();
+      setSelectedScenario("");
+    },
+  });
 
   // Watch field values for character counters
   const subjectValue = watch("subject");
   const bodyValue = watch("body");
 
   const onSubmit = async (data: TicketFormData) => {
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await fetch("/api/tickets/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          subject: data.subject,
-          body: data.body,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "Failed to create ticket");
-      }
-
-      setSuccess(
-        `Ticket created successfully! Ticket number: ${result.data.ticket_number}`,
-      );
-
-      // Reset form and scenario
-      reset();
-      setSelectedScenario("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    }
+    createTicketMutation.mutate(data);
   };
 
   const handleScenarioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -95,7 +79,7 @@ export function TicketForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full">
       <div className="bg-white rounded-lg shadow-md p-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
           Submit a Support Ticket
@@ -142,16 +126,11 @@ export function TicketForm() {
           />
 
           {/* Error Message */}
-          {error && (
+          {createTicketMutation.error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm font-medium">{error}</p>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm font-medium">{success}</p>
+              <p className="text-red-800 text-sm font-medium">
+                {createTicketMutation.error.message}
+              </p>
             </div>
           )}
 
@@ -172,12 +151,14 @@ export function TicketForm() {
             <div className="flex-1 w-full">
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={createTicketMutation.isPending}
                 variant="primary"
                 size="md"
                 className="w-full"
               >
-                {isSubmitting ? "🔄 Submitting..." : "🚀 Submit Ticket"}
+                {createTicketMutation.isPending
+                  ? "🔄 Submitting..."
+                  : "🚀 Submit Ticket"}
               </Button>
             </div>
           </div>

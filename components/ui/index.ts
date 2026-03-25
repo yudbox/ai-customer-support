@@ -9,3 +9,5 @@ export { Button } from "./button";
 export { Input } from "./input";
 export { Textarea } from "./textarea";
 export { Select } from "./select";
+export { Sidebar } from "./sidebar";
+export { SidebarToggle } from "./sidebar-toggle";
