@@ -17,13 +17,18 @@
     "generate:customers": "tsx scripts/generate-customers.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "clsx": "^2.1.1",
     "next": "16.2.1",
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-hook-form": "^7.72.0",
     "reflect-metadata": "^0.2.2",
+    "tailwind-merge": "^3.5.0",
     "typeorm": "^0.3.28",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.3.0",
