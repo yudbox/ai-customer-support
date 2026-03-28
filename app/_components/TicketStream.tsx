@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+import { TicketStatus } from "@/lib/types/common";
+
 interface StreamEvent {
   step: string;
-  status: "in_progress" | "complete" | "error";
+  status: TicketStatus;
   message: string;
   detail?: string;
   critical?: boolean;
@@ -44,20 +46,29 @@ export function TicketStream({
     eventSource.onmessage = (event) => {
       const data: StreamEvent = JSON.parse(event.data);
 
-      // Update events list only when status is "complete"
-      if (data.status === "complete") {
-        setEvents((prev) => [...prev, data]);
+      // Update or add event based on step
+      setEvents((prev) => {
+        const existingIndex = prev.findIndex((e) => e.step === data.step);
+        if (existingIndex >= 0) {
+          // Update existing event
+          const updated = [...prev];
+          updated[existingIndex] = data;
+          return updated;
+        } else {
+          // Add new event
+          return [...prev, data];
+        }
+      });
 
-        // Check if this is the final event
-        if (data.step === "complete") {
-          setIsComplete(true);
-          setIsCritical(data.critical || false);
-          eventSource.close();
+      // Check if this is the final event
+      if (data.step === "complete" && data.status === TicketStatus.RESOLVED) {
+        setIsComplete(true);
+        setIsCritical(data.critical || false);
+        eventSource.close();
 
-          // Notify parent component
-          if (onComplete) {
-            onComplete(data.critical || false);
-          }
+        // Notify parent component
+        if (onComplete) {
+          onComplete(data.critical || false);
         }
       }
     };
@@ -92,6 +103,8 @@ export function TicketStream({
     );
   }
 
+  console.log("111111111111111111111111 events", events);
+
   return (
     <div className="bg-white rounded-lg shadow-md p-8 space-y-6">
       {/* Header */}
@@ -108,46 +121,52 @@ export function TicketStream({
           <div key={index} className="flex items-start gap-4">
             {/* Icon */}
             <div className="flex-shrink-0">
-              {event.step === "complete" ? (
-                event.critical ? (
-                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                    <span className="text-xl">🚨</span>
-                  </div>
+              {event.status === TicketStatus.RESOLVED ? (
+                event.step === "complete" ? (
+                  event.critical ? (
+                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                      <span className="text-xl">🚨</span>
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                      <span className="text-xl">✅</span>
+                    </div>
+                  )
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                     <span className="text-xl">✅</span>
                   </div>
                 )
+              ) : event.status === TicketStatus.IN_PROGRESS ? (
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                </div>
               ) : (
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-xl">✅</span>
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <span className="text-xl">⏳</span>
                 </div>
               )}
             </div>
 
             {/* Content */}
             <div className="flex-1">
-              <p className="font-medium text-gray-900">{event.message}</p>
+              <p
+                className={`font-medium ${
+                  event.status === TicketStatus.RESOLVED
+                    ? "text-gray-900"
+                    : event.status === TicketStatus.IN_PROGRESS
+                      ? "text-blue-900"
+                      : "text-gray-600"
+                }`}
+              >
+                {event.message}
+              </p>
               {event.detail && (
                 <p className="text-sm text-gray-600 mt-1">{event.detail}</p>
               )}
             </div>
           </div>
         ))}
-
-        {/* Loading spinner for current step */}
-        {!isComplete && events.length < 6 && (
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-gray-700">Processing...</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Final Result Card */}

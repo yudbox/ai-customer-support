@@ -97,20 +97,18 @@ export function TicketForm({ onSubmitSuccess }: TicketFormProps) {
           />
 
           {/* Subject */}
-          <div>
-            <Input
-              type="text"
-              label="Subject"
-              placeholder="Brief description of your issue"
-              error={errors.subject?.message}
-              required
-              maxLength={500}
-              {...register("subject")}
-            />
-            <p className="mt-1.5 text-xs text-gray-500">
-              {subjectValue?.length || 0}/500 characters
-            </p>
-          </div>
+          <Input
+            type="text"
+            label="Subject"
+            placeholder="Brief description of your issue"
+            error={errors.subject?.message}
+            required
+            maxLength={500}
+            {...register("subject")}
+          />
+          <p className="mt-1.5 text-xs text-gray-500">
+            {subjectValue?.length || 0}/500 characters
+          </p>
 
           {/* Body */}
           <Textarea
@@ -123,6 +121,14 @@ export function TicketForm({ onSubmitSuccess }: TicketFormProps) {
             showCharCount
             currentLength={bodyValue?.length || 0}
             {...register("body")}
+          />
+
+          {/* Order Number */}
+          <Input
+            type="text"
+            label="Order Number (optional)"
+            placeholder="Order number (optional)"
+            {...register("order_number")}
           />
 
           {/* Error Message */}

@@ -11,14 +11,7 @@ import {
 import type { Customer } from "./Customer";
 import type { Order } from "./Order";
 import type { Refund } from "./Refund";
-
-export enum TicketStatus {
-  OPEN = "open",
-  IN_PROGRESS = "in_progress",
-  PENDING_APPROVAL = "pending_approval",
-  RESOLVED = "resolved",
-  CLOSED = "closed",
-}
+import { TicketStatus } from "@/lib/types/common";
 
 export enum TicketPriority {
   CRITICAL = "critical",

@@ -2,13 +2,11 @@ import { z } from "zod";
 import { router, publicProcedure } from "../server";
 import { getDataSource } from "@/lib/database/connection";
 import { Customer, CustomerTier } from "@/lib/database/entities/Customer";
-import {
-  Ticket,
-  TicketStatus,
-  TicketPriority,
-} from "@/lib/database/entities/Ticket";
+import { Ticket, TicketPriority } from "@/lib/database/entities/Ticket";
+import { TicketStatus } from "@/lib/types/common";
 import { Order } from "@/lib/database/entities/Order";
 import { ticketFormSchema } from "@/lib/validations/ticket-form-schema";
+// import { runWorkflowForTicketId } from "@/lib/langgraph/workflow";
 
 /**
  * Generate ticket number: TKT-YYYY-MMDD-XXXX
@@ -37,21 +35,24 @@ export const ticketsRouter = router({
   create: publicProcedure
     .input(ticketFormSchema)
     .mutation(async ({ input }) => {
+      console.log("[tickets.create] Handler START");
       const connection = await getDataSource();
+      console.log("[tickets.create] Got DB connection");
       const customerRepo = connection.getRepository(Customer);
       const ticketRepo = connection.getRepository(Ticket);
       const orderRepo = connection.getRepository(Order);
 
       // Find or create customer by email
+
+      console.log("[tickets.create] Looking for customer", input.email);
       let customer = await customerRepo.findOne({
         where: { email: input.email },
       });
 
       if (!customer) {
+        console.log("[tickets.create] Customer not found, creating new");
         // Extract name from email (before @)
         const name = input.email.split("@")[0];
-
-        // Create new customer
         customer = customerRepo.create({
           name: name.charAt(0).toUpperCase() + name.slice(1),
           email: input.email,
@@ -60,22 +61,32 @@ export const ticketsRouter = router({
           total_spent: 0,
           lifetime_value: 0,
         });
-
         customer = await customerRepo.save(customer);
+        console.log("[tickets.create] New customer saved", customer.id);
       }
 
       // Find order if order_number provided
+
       let order: Order | null = null;
       if (input.order_number) {
+        console.log("[tickets.create] Looking for order", input.order_number);
         order = await orderRepo.findOne({
           where: { order_number: input.order_number },
         });
+        if (order) {
+          console.log("[tickets.create] Order found", order.id);
+        } else {
+          console.log("[tickets.create] Order not found");
+        }
       }
 
       // Generate ticket number
+
       const ticketNumber = generateTicketNumber();
+      console.log("[tickets.create] Generated ticket number", ticketNumber);
 
       // Create ticket
+
       const ticket = ticketRepo.create({
         ticket_number: ticketNumber,
         subject: input.subject,
@@ -85,10 +96,18 @@ export const ticketsRouter = router({
         customer_id: customer.id,
         order_id: order?.id,
       });
+      console.log("[tickets.create] Ticket entity created");
 
       const savedTicket = await ticketRepo.save(ticket);
+      console.log("[tickets.create] Ticket saved", savedTicket.id);
 
-      // Return typed response
+      // Запустить Intake Agent workflow (fire-and-forget)
+      // runWorkflowForTicketId(savedTicket.id).catch((err) => {
+      //   console.error("Workflow error:", err);
+      // });
+
+      // Return typed response сразу
+      console.log("[tickets.create] Returning response");
       return {
         ticket_number: savedTicket.ticket_number,
         id: savedTicket.id,
@@ -216,7 +235,7 @@ export const ticketsRouter = router({
       }
 
       // Update ticket
-      ticket.status = TicketStatus.CLOSED;
+      ticket.status = TicketStatus.REJECTED;
       ticket.resolution = `Rejected by manager: ${input.reason}`;
 
       await ticketRepo.save(ticket);

@@ -18,7 +18,7 @@ export const ticketFormSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(5000, "Description must be 5000 characters or less"),
-  order_number: z.string().optional(), // Optional field for linking to order
+    order_number: z.string().min(1).max(50).optional().or(z.literal("")), // Опциональное поле для связи с заказом, пустая строка допустима
 });
 
 export type TicketFormData = z.infer<typeof ticketFormSchema>;

@@ -5,7 +5,7 @@ export { Order } from "./Order";
 export type { OrderStatus, OrderItem } from "./Order";
 
 export { Ticket } from "./Ticket";
-export type { TicketStatus, TicketPriority, SentimentLabel } from "./Ticket";
+export type { TicketPriority, SentimentLabel } from "./Ticket";
 
 export { Shipment } from "./Shipment";
 export type { ShipmentStatus, ShipmentEvent } from "./Shipment";
