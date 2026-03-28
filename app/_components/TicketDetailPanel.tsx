@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
+import { SentimentLabel } from "@/lib/types/common";
 
 interface TicketDetailPanelProps {
   ticketId: string | null;
@@ -183,9 +184,9 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
             <div>
               <p className="text-sm font-medium text-gray-500">Sentiment</p>
               <p className="text-sm text-gray-900">
-                {ticket.sentiment_label === "ANGRY"
+                {ticket.sentiment_label === SentimentLabel.ANGRY
                   ? "😡 ANGRY"
-                  : ticket.sentiment_label === "NEUTRAL"
+                  : ticket.sentiment_label === SentimentLabel.NEUTRAL
                     ? "😐 NEUTRAL"
                     : "😊 POSITIVE"}{" "}
                 (

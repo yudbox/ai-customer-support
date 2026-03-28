@@ -1,6 +1,6 @@
 import type { WorkflowStateType } from "../state/WorkflowState";
 import { TicketStatus } from "@/lib/types/common";
-import { openai } from "../../openai";
+import { openai } from "../../clients/openai";
 
 /**
  * Node 2: Classification Agent
@@ -12,7 +12,7 @@ export async function classificationNode(
   console.log("🔵 Agent 2: Classification Agent - Starting...");
 
   try {
-    const prompt = `You are a support ticket classifier.\nGiven the subject and body of a customer support ticket, classify it into one of the following categories and subcategories:\n\nCategories:\n- Order Status: Delayed Delivery, Order Not Received, Order Cancelation\n- Refund: Refund Request, Refund Not Received\n- Product Question: Product Info, Compatibility, Warranty\n- Account: Login Issue, Password Reset\n\nReturn a JSON object:\n{\n  \"category\": \"...\",\n  \"subcategory\": \"...\",\n  \"confidence\": 0.0-1.0\n}\n\nSubject: ${state.input.subject}\nBody: ${state.input.body}`;
+    const prompt = `You are a support ticket classifier.\nGiven the subject and body of a customer support ticket, classify it into one of the following categories and subcategories:\n\nCategories:\n- Account Issues: Cannot Login, Email Change Request, Password Reset\n- Payment Problems: Card Declined, Double Charge, Payment Failed, Billing Issue\n- Product Quality: Missing Parts, Product Damaged on Arrival, Defective Product\n- Refund Requests: Changed Mind, Defective Product Return, Order Cancellation\n- Shipping Delays: Package Lost, Wrong Address, Delayed Delivery, Not Received\n- Technical Issues: App Not Loading, Feature Not Working, Checkout Issue, Website Bug\n\nReturn a JSON object:\n{\n  \"category\": \"...\",\n  \"subcategory\": \"...\",\n  \"confidence\": 0.0-1.0\n}\n\nSubject: ${state.input.subject}\nBody: ${state.input.body}`;
 
     const completion = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-3.5-turbo",

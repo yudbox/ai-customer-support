@@ -11,19 +11,13 @@ import {
 import type { Customer } from "./Customer";
 import type { Order } from "./Order";
 import type { Refund } from "./Refund";
-import { TicketStatus } from "@/lib/types/common";
+import { TicketStatus, SentimentLabel } from "@/lib/types/common";
 
 export enum TicketPriority {
   CRITICAL = "critical",
   HIGH = "high",
   MEDIUM = "medium",
   LOW = "low",
-}
-
-export enum SentimentLabel {
-  ANGRY = "ANGRY",
-  NEUTRAL = "NEUTRAL",
-  POSITIVE = "POSITIVE",
 }
 
 @Entity("tickets")

@@ -38,12 +38,12 @@ export enum TicketStatus {
  * Категории тикетов
  */
 export type TicketCategory =
-  | "Order Status"
-  | "Returns/Refunds"
-  | "Product Question"
-  | "Payment Issue"
-  | "Technical Bug"
-  | "Other";
+  | "Account Issues"
+  | "Payment Problems"
+  | "Product Quality"
+  | "Refund Requests"
+  | "Shipping Delays"
+  | "Technical Issues";
 
 /**
  * Уровень приоритета
@@ -51,9 +51,13 @@ export type TicketCategory =
 export type PriorityLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 
 /**
- * Sentiment labels
+ * Sentiment labels enum
  */
-export type SentimentLabel = "POSITIVE" | "NEUTRAL" | "NEGATIVE";
+export enum SentimentLabel {
+  POSITIVE = "POSITIVE",
+  NEUTRAL = "NEUTRAL",
+  ANGRY = "ANGRY", // Maps from HuggingFace NEGATIVE
+}
 
 /**
  * Customer tiers

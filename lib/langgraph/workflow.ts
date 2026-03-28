@@ -3,9 +3,11 @@ import { Ticket } from "@/lib/database/entities/Ticket";
 import { StateGraph, START, END } from "@langchain/langgraph";
 import { WorkflowState, WorkflowStateType } from "./state/WorkflowState";
 import type { CustomerTicketInput } from "@/lib/types/common";
+import type { CustomerLookupOutput } from "@/lib/types/agents";
 import { intakeNode } from "./agentNodes/intakeNode";
 import { classificationNode } from "./agentNodes/classificationNode";
-// import { sentimentNode } from "./agentNodes/sentimentNode";
+import { sentimentNode } from "./agentNodes/sentimentNode";
+import { customerLookupNode } from "./agentNodes/customerLookupNode";
 import { TicketStatus } from "@/lib/types/common";
 
 // Запустить workflow для тикета по id
@@ -34,12 +36,13 @@ export function createWorkflow() {
   const workflow = new StateGraph(WorkflowState)
     .addNode("intakeAgent", intakeNode)
     .addNode("classificationAgent", classificationNode)
-    // .addNode("sentimentAgent", sentimentNode)
+    .addNode("sentimentAgent", sentimentNode)
+    .addNode("customerAgent", customerLookupNode)
     .addEdge(START, "intakeAgent")
     .addEdge("intakeAgent", "classificationAgent")
-    // .addEdge("classificationAgent", "sentimentAgent")
-    // .addEdge("sentimentAgent", END);
-    .addEdge("classificationAgent", END);
+    .addEdge("classificationAgent", "sentimentAgent")
+    .addEdge("sentimentAgent", "customerAgent")
+    .addEdge("customerAgent", END);
   return workflow.compile();
 }
 
@@ -87,9 +90,14 @@ export async function runWorkflow(input: CustomerTicketInput) {
 
 /**
  * Экспортируемая функция для SSE стриминга
+ * @param input - данные тикета
+ * @param customerData - опциональные данные клиента (для оптимизации)
  */
 
-export async function streamWorkflow(input: CustomerTicketInput) {
+export async function streamWorkflow(
+  input: CustomerTicketInput,
+  customerData?: CustomerLookupOutput,
+) {
   console.log("🔄 Starting workflow with streaming...");
 
   const app = createWorkflow();
@@ -100,6 +108,8 @@ export async function streamWorkflow(input: CustomerTicketInput) {
     status: TicketStatus.OPEN,
     needs_approval: false,
     errors: [],
+    // ✅ Передаем customer data если есть (оптимизация)
+    customer: customerData,
   };
 
   // Мапа для человекочитаемых названий агентов
@@ -107,7 +117,12 @@ export async function streamWorkflow(input: CustomerTicketInput) {
     intakeAgent: "Intake Agent",
     classificationAgent: "Classification Agent",
     sentimentAgent: "Sentiment Agent",
+    customerAgent: "Customer Lookup Agent",
   };
+
+  // Helper для задержки, чтобы UI успел показать спиннер
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   // Реализуем генератор для стриминга событий
   async function* eventGenerator() {
@@ -126,12 +141,74 @@ export async function streamWorkflow(input: CustomerTicketInput) {
           detail: `Analyzing: ${input.subject}`,
         };
 
-        // Затем сразу отправляем resolved (агент завершил работу)
+        // Даём UI время показать спиннер (300ms)
+        await sleep(1000);
+
+        // Затем отправляем resolved (агент завершил работу)
+        // Добавляем детальную информацию о результатах каждого агента
+        let detailMessage = "Analysis complete";
+
+        if (nodeName === "intakeAgent" && nodeData && "intake" in nodeData) {
+          const intake = (nodeData as any).intake;
+          if (intake) {
+            const parts = [];
+            if (intake.extracted_order_number) {
+              parts.push(`Order #${intake.extracted_order_number}`);
+            }
+            if (intake.keywords && intake.keywords.length > 0) {
+              parts.push(`Keywords: ${intake.keywords.slice(0, 3).join(", ")}`);
+            }
+            if (parts.length > 0) {
+              detailMessage = parts.join(" | ");
+            }
+          }
+        } else if (
+          nodeName === "classificationAgent" &&
+          nodeData &&
+          "classification" in nodeData
+        ) {
+          const classification = (nodeData as any).classification;
+          if (classification) {
+            detailMessage = `Category: ${classification.category} → ${classification.subcategory}`;
+            if (classification.confidence) {
+              detailMessage += ` (${(classification.confidence * 100).toFixed(0)}%)`;
+            }
+          }
+        } else if (
+          nodeName === "sentimentAgent" &&
+          nodeData &&
+          "sentiment" in nodeData
+        ) {
+          const sentiment = (nodeData as any).sentiment;
+          if (sentiment) {
+            detailMessage = `Sentiment: ${sentiment.emoji} ${sentiment.label} (${(sentiment.score * 100).toFixed(0)}%)`;
+          }
+        } else if (
+          nodeName === "customerAgent" &&
+          nodeData &&
+          "customer" in nodeData
+        ) {
+          const customer = (nodeData as any).customer;
+          if (customer && customer.found) {
+            const parts = [];
+            parts.push(`Tier: ${customer.tier}`);
+            if (customer.total_orders !== undefined) {
+              parts.push(`Orders: ${customer.total_orders}`);
+            }
+            if (customer.lifetime_value !== undefined) {
+              parts.push(`LTV: $${customer.lifetime_value.toFixed(2)}`);
+            }
+            detailMessage = parts.join(" | ");
+          } else {
+            detailMessage = "New customer - no history found";
+          }
+        }
+
         yield {
           step: nodeName,
           status: TicketStatus.RESOLVED,
           message: `${agentName} completed`,
-          detail: `Analysis complete`,
+          detail: detailMessage,
         };
       }
     }

@@ -2,6 +2,7 @@
 
 import { trpc } from "@/lib/trpc/client";
 import { formatDistanceToNow } from "date-fns";
+import { SentimentLabel } from "@/lib/types/common";
 
 interface ManagerSidebarProps {
   selectedTicketId: string | null;
@@ -95,9 +96,9 @@ export function ManagerSidebar({
                     <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
                       {ticket.sentiment_label && (
                         <span>
-                          {ticket.sentiment_label === "ANGRY"
+                          {ticket.sentiment_label === SentimentLabel.ANGRY
                             ? "😡"
-                            : ticket.sentiment_label === "NEUTRAL"
+                            : ticket.sentiment_label === SentimentLabel.NEUTRAL
                               ? "😐"
                               : "😊"}
                         </span>

@@ -70,7 +70,7 @@ export interface SentimentOutput {
  */
 export interface CustomerLookupOutput {
   found: boolean;
-  customer_id?: number;
+  customer_id?: string; // UUID
   tier?: CustomerTier;
   total_orders?: number;
   lifetime_value?: number;

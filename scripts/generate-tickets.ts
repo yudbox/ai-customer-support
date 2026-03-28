@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { faker } from "@faker-js/faker";
 import { v4 as uuidv4 } from "uuid";
+import { SentimentLabel } from "../lib/types/common";
 
 enum TicketStatus {
   OPEN = "open",
@@ -16,12 +17,6 @@ enum TicketPriority {
   HIGH = "high",
   MEDIUM = "medium",
   LOW = "low",
-}
-
-enum SentimentLabel {
-  ANGRY = "ANGRY",
-  NEUTRAL = "NEUTRAL",
-  POSITIVE = "POSITIVE",
 }
 
 interface Ticket {
