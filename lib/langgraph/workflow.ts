@@ -8,6 +8,7 @@ import { intakeNode } from "./agentNodes/intakeNode";
 import { classificationNode } from "./agentNodes/classificationNode";
 import { sentimentNode } from "./agentNodes/sentimentNode";
 import { customerLookupNode } from "./agentNodes/customerLookupNode";
+import { resolutionSearchNode } from "./agentNodes/resolutionSearchNode";
 import { TicketStatus } from "@/lib/types/common";
 
 // Запустить workflow для тикета по id
@@ -38,11 +39,13 @@ export function createWorkflow() {
     .addNode("classificationAgent", classificationNode)
     .addNode("sentimentAgent", sentimentNode)
     .addNode("customerAgent", customerLookupNode)
+    .addNode("resolutionSearchAgent", resolutionSearchNode)
     .addEdge(START, "intakeAgent")
     .addEdge("intakeAgent", "classificationAgent")
     .addEdge("classificationAgent", "sentimentAgent")
     .addEdge("sentimentAgent", "customerAgent")
-    .addEdge("customerAgent", END);
+    .addEdge("customerAgent", "resolutionSearchAgent")
+    .addEdge("resolutionSearchAgent", END);
   return workflow.compile();
 }
 
@@ -118,6 +121,7 @@ export async function streamWorkflow(
     classificationAgent: "Classification Agent",
     sentimentAgent: "Sentiment Agent",
     customerAgent: "Customer Lookup Agent",
+    resolutionSearchAgent: "Resolution Search Agent",
   };
 
   // Helper для задержки, чтобы UI успел показать спиннер

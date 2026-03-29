@@ -87,8 +87,9 @@ export interface CustomerLookupOutput {
  */
 export interface RAGOutput {
   similar_tickets: Array<{
-    id: number;
-    issue: string;
+    id: string; // UUID from PostgreSQL
+    subject: string;
+    category?: string;
     resolution: string;
     similarity: number; // 0-1
   }>;
