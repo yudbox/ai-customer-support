@@ -12,7 +12,6 @@ export type {
   PriorityLevel,
   SentimentLabel,
   CustomerTier,
-  SupportTeam,
   AgentError,
 } from "./common";
 

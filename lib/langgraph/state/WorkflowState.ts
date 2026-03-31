@@ -28,9 +28,14 @@ export const WorkflowState = Annotation.Root({
   assignment: Annotation<AssignmentOutput | undefined>,
 
   // Metadata
-  ticket_id: Annotation<number | undefined>,
+  ticket_id: Annotation<string | undefined>,
   created_at: Annotation<string>,
   status: Annotation<TicketStatus>(),
+
+  // Automation (for LOW/MEDIUM priority tickets)
+  assigned_team: Annotation<string | null | undefined>,
+  assigned_to: Annotation<string | null | undefined>, // Specific team member
+  resolution: Annotation<string | null | undefined>,
 
   // Human-in-the-loop
   needs_approval: Annotation<boolean>(),

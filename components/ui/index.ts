@@ -11,3 +11,5 @@ export { Textarea } from "./textarea";
 export { Select } from "./select";
 export { Sidebar } from "./sidebar";
 export { SidebarToggle } from "./sidebar-toggle";
+export { Toast } from "./toast";
+export type { ToastProps, ToastVariant } from "./toast";

@@ -11,15 +11,26 @@ interface TicketDetailPanelProps {
 
 export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
   const [isModifying, setIsModifying] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState("technical_support");
 
   const { data: ticket, isLoading } = trpc.tickets.getById.useQuery(
     { id: ticketId! },
     { enabled: !!ticketId },
   );
 
+  // Separate query for AI recommendations (from Pinecone)
+  const { data: aiRecommendations, isLoading: isLoadingRecommendations } =
+    trpc.tickets.getAIRecommendations.useQuery(
+      { ticketId: ticketId! },
+      { enabled: !!ticketId },
+    );
+
+  const utils = trpc.useUtils();
+
   const approveMutation = trpc.tickets.approve.useMutation({
     onSuccess: () => {
       alert("Ticket approved successfully!");
+      utils.tickets.getPendingApproval.invalidate();
     },
   });
 
@@ -68,9 +79,17 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
   }
 
   const handleApprove = () => {
-    if (confirm("Approve this ticket with AI recommendations?")) {
+    const hasAIRecommendations = aiRecommendations?.suggested_solution;
+
+    const message = hasAIRecommendations
+      ? `Approve this ticket with AI recommended solution?\n\nTeam: ${selectedTeam}\nSolution: ${aiRecommendations?.suggested_solution?.substring(0, 100)}...`
+      : `Approve and assign this ticket to ${selectedTeam}?\n\nNo AI recommendations available - team will investigate manually.`;
+
+    if (confirm(message)) {
       approveMutation.mutate({
         id: ticket.id,
+        assigned_team: selectedTeam,
+        resolution: aiRecommendations?.suggested_solution,
       });
     }
   };
@@ -215,8 +234,100 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
           </div>
         </div>
 
+        {/* Similar Tickets (AI Recommendations) */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">
+            🔍 Similar Resolved Tickets
+          </h2>
+
+          {isLoadingRecommendations ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-sm text-gray-500 mt-2">
+                Searching Pinecone for similar tickets...
+              </p>
+            </div>
+          ) : aiRecommendations?.similar_tickets &&
+            aiRecommendations.similar_tickets.length > 0 ? (
+            <div className="space-y-4">
+              {aiRecommendations.similar_tickets.map((similar, idx) => (
+                <div
+                  key={idx}
+                  className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-bold text-blue-700">
+                          [{(similar.similarity * 100).toFixed(0)}% match]
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          {similar.subject}
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700">
+                          Resolution:
+                        </span>
+                        <p className="mt-1 text-gray-600">
+                          {similar.resolution}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {aiRecommendations.suggested_solution && (
+                <div className="mt-4 bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                  <h3 className="text-sm font-bold text-green-800 mb-2">
+                    💡 AI Recommended Solution (Best Match)
+                  </h3>
+                  <p className="text-sm text-gray-700">
+                    {aiRecommendations.suggested_solution}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm font-medium">❌ No similar tickets found</p>
+              <p className="text-xs mt-2">
+                This appears to be the first ticket of this type.
+              </p>
+              <p className="text-xs mt-1 text-gray-400">
+                Manual investigation required by support team.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Action Buttons */}
         <div className="bg-white rounded-lg shadow p-6">
+          <div className="mb-4">
+            <label
+              htmlFor="team-select"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Assign to Team:
+            </label>
+            <select
+              id="team-select"
+              value={selectedTeam}
+              onChange={(e) => setSelectedTeam(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="technical_support">
+                Technical Support (Tier 2)
+              </option>
+              <option value="customer_service">
+                Customer Service (Tier 1)
+              </option>
+              <option value="billing">Billing Team</option>
+              <option value="escalation">Escalation Team (Tier 3)</option>
+            </select>
+          </div>
+
           <div className="flex gap-4">
             <Button
               variant="destructive"
@@ -237,7 +348,7 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
               disabled={approveMutation.isPending}
               className="ml-auto"
             >
-              ✅ Approve
+              ✅ Approve & Assign to {selectedTeam.replace("_", " ")}
             </Button>
           </div>
 

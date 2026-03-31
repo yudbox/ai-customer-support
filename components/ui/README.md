@@ -80,6 +80,108 @@ import { Textarea } from "@/components/ui/textarea";
 
 ---
 
+### Toast (Global System)
+
+**Global toast notifications powered by React Context.**
+
+```tsx
+"use client";
+
+import { useToast } from "@/lib/contexts/ToastContext";
+
+export function MyComponent() {
+  const { showToast } = useToast();
+
+  const handleClick = () => {
+    showToast({
+      message: "Success!",
+      description: "Operation completed successfully",
+      variant: "success",
+      duration: 5000,
+    });
+  };
+
+  return <button onClick={handleClick}>Show Toast</button>;
+}
+```
+
+**Variants:**
+
+- `success` - Green gradient with 📧 icon (Email & Slack badge)
+- `warning` - Orange gradient with 🚨 icon (Priority Alert badge)
+- `info` - Blue gradient with 📬 icon (Email badge)
+
+**API:**
+
+- `showToast(options)` - Display toast notification
+- `hideToast()` - Manually hide current toast
+
+**Options:**
+
+- `message` - Main notification title (required)
+- `description` - Optional detailed message
+- `variant` - Visual style (default: "info")
+- `duration` - Auto-dismiss time in ms (default: 5000)
+
+**Features:**
+
+- ✅ Global state with React Context
+- ✅ Use from any client component
+- ✅ Auto-dismiss with progress bar
+- ✅ Manual close button
+- ✅ Only one toast visible at a time
+- ✅ Smooth animations
+
+**Setup:**
+
+Toast system is already configured in root layout. Just import and use the hook!
+
+---
+
+### Toast (Direct Component)
+
+```tsx
+import { Toast } from "@/components/ui";
+
+<Toast
+  message="Notification Sent"
+  description="Your ticket has been processed successfully."
+  variant="success"
+  duration={5000}
+  show={showToast}
+  onClose={() => setShowToast(false)}
+/>;
+```
+
+**Variants:**
+
+- `success` - Green gradient with 📧 icon (Email & Slack badge)
+- `warning` - Orange gradient with 🚨 icon (Priority Alert badge)
+- `info` - Blue gradient with 📬 icon (Email badge)
+
+---
+
+### Toast (Direct Component)
+
+**For advanced use cases, you can use Toast component directly:**
+
+```tsx
+import { Toast } from "@/components/ui";
+
+<Toast
+  message="Notification Sent"
+  description="Your ticket has been processed successfully."
+  variant="success"
+  duration={5000}
+  show={showToast}
+  onClose={() => setShowToast(false)}
+/>;
+```
+
+**Note:** For most use cases, prefer using `useToast()` hook instead of direct Toast component.
+
+---
+
 ## Utilities
 
 ### cn()

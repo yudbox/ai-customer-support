@@ -3,9 +3,15 @@ import { router, publicProcedure } from "../server";
 import { getDataSource } from "@/lib/database/connection";
 import { Customer, CustomerTier } from "@/lib/database/entities/Customer";
 import { Ticket, TicketPriority } from "@/lib/database/entities/Ticket";
-import { TicketStatus } from "@/lib/types/common";
+import { Team } from "@/lib/database/entities/Team";
+import { TicketStatus, TeamName, TeamCode } from "@/lib/types/common";
 import { Order } from "@/lib/database/entities/Order";
 import { ticketFormSchema } from "@/lib/validations/ticket-form-schema";
+import { pineconeIndex, PINECONE_NAMESPACE } from "@/lib/clients/pinecone";
+import {
+  createEmbedding,
+  formatTicketForEmbedding,
+} from "@/lib/services/embeddings";
 // import { runWorkflowForTicketId } from "@/lib/langgraph/workflow";
 
 /**
@@ -173,6 +179,8 @@ export const ticketsRouter = router({
         sentiment_score: ticket.sentiment_score
           ? Number(ticket.sentiment_score)
           : null,
+        assigned_team: ticket.assigned_team,
+        assigned_to: ticket.assigned_to,
         customer: ticket.customer
           ? {
               email: ticket.customer.email,
@@ -197,10 +205,18 @@ export const ticketsRouter = router({
    * Approve тикет (Manager action)
    */
   approve: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(
+      z.object({
+        id: z.string(),
+        assigned_team: z.string(),
+        assigned_to: z.string().optional(),
+        resolution: z.string().optional(),
+      }),
+    )
     .mutation(async ({ input }) => {
       const connection = await getDataSource();
       const ticketRepo = connection.getRepository(Ticket);
+      const teamRepo = connection.getRepository(Team);
 
       const ticket = await ticketRepo.findOne({ where: { id: input.id } });
 
@@ -208,8 +224,49 @@ export const ticketsRouter = router({
         throw new Error("Ticket not found");
       }
 
+      // Auto-assign team member if not provided
+      let finalAssignedTo = input.assigned_to;
+      let finalAssignedTeam = input.assigned_team;
+
+      if (!finalAssignedTo) {
+        // Map selected team code to Team entity name using enum
+        const teamNameMap: Record<string, TeamName> = {
+          [TeamCode.TECHNICAL_SUPPORT]: TeamName.TECHNICAL_SUPPORT,
+          [TeamCode.CUSTOMER_SERVICE]: TeamName.TECHNICAL_SUPPORT, // Fallback
+          [TeamCode.BILLING]: TeamName.BILLING_PAYMENTS,
+          [TeamCode.BILLING_TEAM]: TeamName.BILLING_PAYMENTS,
+          [TeamCode.ESCALATION]: TeamName.TECHNICAL_SUPPORT, // Escalation → Technical
+          [TeamCode.LOGISTICS_TEAM]: TeamName.SHIPPING_DELIVERY,
+          [TeamCode.SHIPPING_TEAM]: TeamName.SHIPPING_DELIVERY,
+          [TeamCode.RETURNS_TEAM]: TeamName.RETURNS_REFUNDS,
+          [TeamCode.PRODUCT_ISSUES]: TeamName.PRODUCT_ISSUES,
+          [TeamCode.ACCOUNT_MANAGEMENT]: TeamName.ACCOUNT_MANAGEMENT,
+        };
+
+        const teamName =
+          teamNameMap[input.assigned_team] || TeamName.TECHNICAL_SUPPORT;
+        const team = await teamRepo.findOne({ where: { name: teamName } });
+
+        if (team && team.members.length > 0) {
+          // Randomly select a member
+          const randomIndex = Math.floor(Math.random() * team.members.length);
+          finalAssignedTo = team.members[randomIndex];
+          finalAssignedTeam = team.name; // Use actual team name from DB
+          console.log(
+            `✅ Manager approved - assigned to ${team.name} → ${finalAssignedTo}`,
+          );
+        }
+      }
+
       // Update ticket
       ticket.status = TicketStatus.IN_PROGRESS;
+      ticket.assigned_team = finalAssignedTeam;
+      if (finalAssignedTo) {
+        ticket.assigned_to = finalAssignedTo;
+      }
+      if (input.resolution) {
+        ticket.resolution = input.resolution;
+      }
 
       await ticketRepo.save(ticket);
 
@@ -244,5 +301,79 @@ export const ticketsRouter = router({
         success: true,
         ticket_number: ticket.ticket_number,
       };
+    }),
+
+  /**
+   * Get AI recommendations for a ticket (queries Pinecone in real-time)
+   */
+  getAIRecommendations: publicProcedure
+    .input(z.object({ ticketId: z.string() }))
+    .query(async ({ input }) => {
+      const connection = await getDataSource();
+      const ticketRepo = connection.getRepository(Ticket);
+
+      // Get ticket details
+      const ticket = await ticketRepo.findOne({
+        where: { id: input.ticketId },
+      });
+
+      if (!ticket) {
+        throw new Error("Ticket not found");
+      }
+
+      try {
+        // Create embedding from ticket
+        const embeddingText = formatTicketForEmbedding(
+          ticket.subject,
+          ticket.body,
+          ticket.category,
+        );
+
+        const embedding = await createEmbedding(embeddingText);
+
+        // Query Pinecone for similar tickets
+        const queryResponse = await pineconeIndex
+          .namespace(PINECONE_NAMESPACE)
+          .query({
+            vector: embedding,
+            topK: 3,
+            includeMetadata: true,
+          });
+
+        // Extract similar tickets
+        const similar_tickets = queryResponse.matches
+          .filter((match) => {
+            return (
+              match.id &&
+              typeof match.id === "string" &&
+              match.metadata?.subject &&
+              match.metadata?.resolution
+            );
+          })
+          .map((match) => ({
+            id: match.id,
+            subject: match.metadata!.subject as string,
+            category: match.metadata!.category as string | undefined,
+            resolution: match.metadata!.resolution as string,
+            similarity: match.score ?? 0,
+          }));
+
+        // Get suggested solution (top match if similarity > 80%)
+        let suggested_solution: string | undefined;
+        if (similar_tickets.length > 0 && similar_tickets[0].similarity > 0.8) {
+          suggested_solution = similar_tickets[0].resolution;
+        }
+
+        return {
+          similar_tickets,
+          suggested_solution,
+        };
+      } catch (error) {
+        console.error("Error fetching AI recommendations:", error);
+        return {
+          similar_tickets: [],
+          suggested_solution: undefined,
+        };
+      }
     }),
 });

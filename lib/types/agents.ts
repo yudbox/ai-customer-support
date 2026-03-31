@@ -9,7 +9,7 @@ import type {
   SentimentLabel,
   CustomerTier,
   PriorityLevel,
-  SupportTeam,
+  TeamName,
 } from "./common";
 
 // ===========================
@@ -121,7 +121,7 @@ export interface PriorityOutput {
  * Роутинг тикета к команде
  */
 export interface AssignmentOutput {
-  team: SupportTeam;
+  team: TeamName;
   assignee?: string; // "@senior-logistics"
   slack_channel: string; // "#support-critical"
 }

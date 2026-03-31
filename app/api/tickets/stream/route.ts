@@ -60,7 +60,11 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
-      for await (const event of await streamWorkflow(input, customerData)) {
+      for await (const event of await streamWorkflow(
+        input,
+        ticket.id,
+        customerData,
+      )) {
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
         );

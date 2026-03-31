@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-import { TicketStatus } from "@/lib/types/common";
+import { useToast } from "@/lib/contexts";
+import { TicketStatus, WorkflowStep } from "@/lib/types/common";
 
 interface StreamEvent {
   step: string;
@@ -10,6 +10,9 @@ interface StreamEvent {
   message: string;
   detail?: string;
   critical?: boolean;
+  resolution?: string | null;
+  assigned_team?: string | null;
+  assigned_to?: string | null;
 }
 
 interface TicketStreamProps {
@@ -26,6 +29,11 @@ export function TicketStream({
   const [events, setEvents] = useState<StreamEvent[]>([]);
   const [isComplete, setIsComplete] = useState(false);
   const [isCritical, setIsCritical] = useState(false);
+  const [resolution, setResolution] = useState<string | null>(null);
+  const [assignedTeam, setAssignedTeam] = useState<string | null>(null);
+  const [assignedTo, setAssignedTo] = useState<string | null>(null);
+
+  const { showToast } = useToast();
 
   useEffect(() => {
     // Reset state when new ticket is submitted
@@ -33,8 +41,27 @@ export function TicketStream({
       setEvents([]);
       setIsComplete(false);
       setIsCritical(false);
+      setResolution(null);
+      setAssignedTeam(null);
+      setAssignedTo(null);
     }
   }, [ticketId]);
+
+  // Show toast notification when ticket is complete
+  useEffect(() => {
+    if (isComplete) {
+      showToast({
+        message: "Notification Sent",
+        description: resolution
+          ? "We've sent a confirmation email with the resolution details."
+          : isCritical
+            ? "Manager has been notified. You'll receive an email update within 60 minutes."
+            : "Support team has been notified and will respond via email.",
+        variant: resolution ? "success" : isCritical ? "warning" : "info",
+        duration: 5000,
+      });
+    }
+  }, [isComplete, resolution, isCritical, showToast]);
 
   useEffect(() => {
     if (!ticketId) return;
@@ -61,9 +88,12 @@ export function TicketStream({
       });
 
       // Check if this is the final event
-      if (data.step === "complete" && data.status === TicketStatus.RESOLVED) {
+      if (data.step === WorkflowStep.COMPLETE) {
         setIsComplete(true);
         setIsCritical(data.critical || false);
+        setResolution(data.resolution || null);
+        setAssignedTeam(data.assigned_team || null);
+        setAssignedTo(data.assigned_to || null);
         eventSource.close();
 
         // Notify parent component
@@ -126,7 +156,7 @@ export function TicketStream({
               {/* Icon */}
               <div className="flex-shrink-0">
                 {event.status === TicketStatus.RESOLVED ? (
-                  event.step === "complete" ? (
+                  event.step === WorkflowStep.COMPLETE ? (
                     event.critical ? (
                       <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
                         <span className="text-xl">🚨</span>
@@ -141,6 +171,10 @@ export function TicketStream({
                       <span className="text-xl">✅</span>
                     </div>
                   )
+                ) : event.status === TicketStatus.PENDING_APPROVAL ? (
+                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-xl">🚨</span>
+                  </div>
                 ) : event.status === TicketStatus.IN_PROGRESS ? (
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                     <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -158,9 +192,11 @@ export function TicketStream({
                   className={`font-medium ${
                     event.status === TicketStatus.RESOLVED
                       ? "text-gray-900"
-                      : event.status === TicketStatus.IN_PROGRESS
-                        ? "text-blue-900"
-                        : "text-gray-600"
+                      : event.status === TicketStatus.PENDING_APPROVAL
+                        ? "text-red-900"
+                        : event.status === TicketStatus.IN_PROGRESS
+                          ? "text-blue-900"
+                          : "text-gray-600"
                   }`}
                 >
                   {event.message}
@@ -203,12 +239,11 @@ export function TicketStream({
                     </p>
                     <p className="font-medium">Priority: CRITICAL 🚨</p>
                   </div>
-                  <p className="mt-4">
-                    You'll be notified when your ticket is approved.
+                  <p className="mt-4 text-sm">
+                    A senior team member will contact you within 60 minutes.
+                    You&apos;ll receive an email notification once your ticket
+                    is approved.
                   </p>
-                  <button className="mt-4 w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors animate-pulse">
-                    📋 View Approval Status
-                  </button>
                 </div>
               </>
             ) : (
@@ -216,35 +251,75 @@ export function TicketStream({
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-3xl">✅</span>
                   <h3 className="text-xl font-bold text-green-900">
-                    TICKET RESOLVED AUTOMATICALLY
+                    {resolution
+                      ? "TICKET RESOLVED AUTOMATICALLY"
+                      : "TICKET ASSIGNED TO SUPPORT TEAM"}
                   </h3>
                 </div>
                 <div className="space-y-3 text-green-900">
-                  <p>Your question has been answered:</p>
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <p className="text-sm text-gray-800">
-                      "The Premium iPhone Case (SKU #789) is NOT compatible with
-                      iPhone 15 Pro Max."
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      <p className="text-sm font-medium">We recommend:</p>
-                      <ul className="text-sm space-y-1 ml-4">
-                        <li>• Ultra Case Pro Max (SKU #801) - $49</li>
-                        <li>• Slim Fit Max (SKU #823) - $35</li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="font-medium">
-                      Ticket ID: #{ticketId.slice(0, 8)}
-                    </p>
-                    <p className="font-medium">
-                      Assigned to: Product Support Team
-                    </p>
-                    <p className="font-medium">
-                      Expected response: Within 2 hours
-                    </p>
-                  </div>
+                  {resolution ? (
+                    <>
+                      <p>
+                        Your ticket has been resolved based on similar past
+                        cases:
+                      </p>
+                      <div className="bg-white rounded-lg p-4 border border-green-200">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          📋 Resolution:
+                        </p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                          {resolution}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p className="font-medium">
+                          Ticket ID: #{ticketId.slice(0, 8)}
+                        </p>
+                        <p className="font-medium">Status: ✅ Resolved</p>
+                        <p className="text-xs text-green-700 mt-2">
+                          If you need further assistance, please reply to this
+                          ticket.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p>
+                        Your ticket has been analyzed and assigned to our
+                        support team:
+                      </p>
+                      <div className="bg-white rounded-lg p-4 border border-green-200">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          📋 Assignment:
+                        </p>
+                        <p className="text-sm text-gray-800">
+                          Team:{" "}
+                          <span className="font-semibold">
+                            {assignedTeam?.replace(/_/g, " ").toUpperCase()}
+                          </span>
+                        </p>
+                        {assignedTo && (
+                          <p className="text-sm text-gray-800 mt-1">
+                            Assigned to:{" "}
+                            <span className="font-semibold">{assignedTo}</span>
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p className="font-medium">
+                          Ticket ID: #{ticketId.slice(0, 8)}
+                        </p>
+                        <p className="font-medium">Status: ⏳ In Progress</p>
+                        <p className="font-medium">
+                          Expected response: Within 2 hours
+                        </p>
+                        <p className="text-xs text-green-700 mt-2">
+                          Our {assignedTeam?.replace(/_/g, " ")} team will
+                          investigate and respond shortly.
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}

@@ -6,8 +6,77 @@ AI-powered customer support system with intelligent ticket routing, sentiment an
 
 - **Frontend:** Next.js 15 (App Router), React 19, TailwindCSS 4
 - **Database:** PostgreSQL 16 (TypeORM)
-- **AI/ML:** LangGraph, OpenAI, RAG with vector embeddings
+- **AI/ML:** LangGraph, OpenAI GPT-3.5, HuggingFace Sentiment Analysis
+- **Vector Database:** Pinecone (text-embedding-3-small, 1536 dimensions)
 - **Infrastructure:** Docker, Vercel
+
+## 🤖 Multi-Agent AI Workflow
+
+The system uses a **6-agent LangGraph workflow** for intelligent ticket processing:
+
+### Agent 1: Intake Agent 📥
+
+- Extracts customer email, subject, body
+- Identifies order numbers and tracking numbers
+- Detects keywords (refund, urgent, angry, etc.)
+- **Status:** ✅ Implemented
+
+### Agent 2: Classification Agent 🏷️
+
+- Uses OpenAI GPT-3.5 to categorize tickets
+- Categories: Shipping, Payment, Product Quality, Technical, Refund/Return, Account Management
+- Provides subcategory and confidence score
+- **Status:** ✅ Implemented
+
+### Agent 3: Sentiment Agent 😊😐😡
+
+- Uses HuggingFace `cardiffnlp/twitter-roberta-base-sentiment-latest`
+- Detects: POSITIVE, NEUTRAL, ANGRY
+- Returns sentiment score (0-1) and emoji
+- **Status:** ✅ Implemented
+
+### Agent 4: Customer Lookup Agent 👤
+
+- Fetches customer data from PostgreSQL
+- Returns: tier (VIP/Regular/New), total orders, lifetime value, avg sentiment
+- **Status:** ✅ Implemented
+
+### Agent 5: Resolution Search Agent 🔍
+
+- **Vector Search with Pinecone** - searches 85 resolved tickets
+- Uses OpenAI `text-embedding-3-small` (1536 dimensions)
+- Returns top-3 similar tickets with similarity scores
+- Suggests solution if similarity > 80%
+- **Status:** ✅ Implemented (85 tickets migrated to Pinecone)
+
+### Agent 6: Priority Agent 🚨
+
+- Calculates priority score (0-100)
+- Formula: base + tier_boost + sentiment_penalty + category_urgency + rag_modifier
+- Override rules: ANGRY sentiment, Technical+ANGRY, VIP+ANGRY, Revenue-blocking
+- Levels: CRITICAL (15 min), HIGH (1 hr), MEDIUM (4 hrs), LOW (24 hrs)
+- Human-in-the-loop: HIGH/CRITICAL tickets require manager approval
+- **Status:** ✅ Implemented
+
+### Workflow Architecture
+
+```
+START
+  ↓
+[Agent 1: Intake] → Extract metadata
+  ↓
+[Agent 2: Classification] → Categorize (OpenAI)
+  ↓
+[Agent 3: Sentiment] → Analyze emotion (HuggingFace)
+  ↓
+[Agent 4: Customer Lookup] → Fetch customer data (PostgreSQL)
+  ↓
+[Agent 5: Resolution Search] → Find similar tickets (Pinecone)
+  ↓
+[Agent 6: Priority] → Calculate urgency ✅
+  ↓
+END → Assign to team
+```
 
 ## Prerequisites
 
@@ -35,17 +104,38 @@ npm install
 Create `.env.local` file in the project root:
 
 ```bash
-# Database
-POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/ai_customer_support
+# OpenAI
+OPENAI_API_KEY=
+OPENAI_MODEL=
+OPENAI_EMBEDDING_MODEL=
+OPENAI_EMBEDDING_DIMENSIONS=
 
-# OpenAI (for AI features)
-OPENAI_API_KEY=your_openai_api_key_here
+# HuggingFace (for Sentiment Analysis)
+HUGGINGFACE_API_KEY=
+HUGGINGFACE_MODEL=
 
-# LangChain (optional, for tracing)
-LANGCHAIN_API_KEY=your_langchain_api_key_here
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_PROJECT=ai-customer-support
+# Pinecone (for Vector Search)
+PINECONE_API_KEY=
+PINECONE_INDEX_NAME=
+PINECONE_NAMESPACE=
+
+# Database - Local
+POSTGRES_HOST=
+POSTGRES_PORT=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DATABASE=
+
+# App Config
+NEXT_PUBLIC_APP_URL=
+NODE_ENV=
 ```
+
+**Get API Keys:**
+
+- OpenAI: https://platform.openai.com/api-keys
+- HuggingFace: https://huggingface.co/settings/tokens
+- Pinecone: https://app.pinecone.io/
 
 ### 4. Start PostgreSQL Database
 
@@ -158,6 +248,19 @@ npm run migration:run          # Apply pending migrations
 npm run migration:revert       # Rollback last migration
 npm run seed                   # Add seed data (keeps existing)
 npm run seed:clear             # Clear all data + reseed
+```
+
+### Vector Database (Pinecone)
+
+```bash
+# Migrate resolved tickets to Pinecone
+npx tsx scripts/seed-pinecone-tickets.ts
+
+# Output:
+# ✅ 85 tickets migrated to Pinecone
+# Namespace: support-tickets
+# Embeddings: text-embedding-3-small (1536 dims)
+# Cost: ~$0.0017
 ```
 
 ### Data Generation
@@ -278,23 +381,82 @@ npm install
 
 ```
 ai-customer-support/
-├── app/                    # Next.js App Router
-│   ├── page.tsx           # Customer support form
-│   ├── manager/           # Manager dashboard
-│   └── api/               # API routes
+├── app/                       # Next.js App Router
+│   ├── page.tsx              # Customer support form
+│   ├── manager/              # Manager dashboard
+│   └── api/
+│       ├── tickets/          # Ticket CRUD + streaming
+│       └── trpc/             # tRPC API routes
 ├── lib/
 │   ├── database/
-│   │   ├── data-source.ts     # TypeORM configuration
-│   │   ├── entities/          # TypeORM entities (8 tables)
-│   │   └── migrations/        # Database migrations
-│   └── langgraph/            # Multi-agent workflow
+│   │   ├── data-source.ts        # TypeORM configuration
+│   │   ├── entities/             # TypeORM entities (8 tables)
+│   │   └── migrations/           # Database migrations
+│   ├── langgraph/
+│   │   ├── workflow.ts           # 6-agent LangGraph workflow
+│   │   └── agentNodes/           # Individual agent implementations
+│   │       ├── intakeNode.ts
+│   │       ├── classificationNode.ts
+│   │       ├── sentimentNode.ts
+│   │       ├── customerNode.ts
+│   │       ├── resolutionSearchNode.ts  # Pinecone RAG
+│   │       └── priorityNode.ts          # Priority calculation
+│   ├── services/
+│   │   └── embeddings.ts         # OpenAI embedding service
+│   ├── clients/
+│   │   └── pinecone.ts           # Pinecone client singleton
+│   └── types/
+│       └── agents.ts             # TypeScript interfaces for agents
 ├── scripts/
-│   ├── generate-*.ts         # Seed data generators
-│   └── seed-database.ts      # Database seeder
-├── data/                     # Generated JSON seed files
-├── docker-compose.yml        # PostgreSQL container
-└── .env.local               # Environment variables
+│   ├── generate-*.ts             # Seed data generators (8 tables)
+│   ├── seed-database.ts          # PostgreSQL seeder
+│   └── seed-pinecone-tickets.ts  # Pinecone migration (85 tickets)
+├── data/                         # Generated JSON seed files
+├── docker-compose.yml            # PostgreSQL container
+└── .env.local                    # Environment variables
 ```
+
+---
+
+## 🧪 Testing the AI Workflow
+
+### Test Agent 5 (Resolution Search)
+
+1. Start the dev server: `npm run dev`
+2. Open http://localhost:3000
+3. Create a test ticket with technical issue:
+
+```
+Subject: Website checkout not working
+Body: I'm trying to complete my purchase but the checkout page keeps crashing...
+```
+
+**Expected Results:**
+
+```
+✅ Agent 1: Intake Agent - keywords: ["payment", "asap"]
+✅ Agent 2: Classification - Technical Issues / Checkout Issue (95%)
+✅ Agent 3: Sentiment - ANGRY 😡 (0.83)
+✅ Agent 4: Customer Lookup - New tier, 0 orders, $0 LTV
+✅ Agent 5: Resolution Search - Found 3 similar tickets (54-58% similarity)
+   1. [58.0%] "Help needed - crash"
+   2. [54.5%] "Problem: technical"
+   3. [54.3%] "Issue with technical"
+```
+
+### Vector Search Quality
+
+- **High similarity (>80%):** Exact match categories - suggests solution
+- **Medium similarity (50-80%):** Related issues - shows similar tickets
+- **Low similarity (<50%):** Different categories - needs human review
+
+**Example Similarity Scores:**
+
+| Test Ticket          | Similar Ticket Category | Score |
+| -------------------- | ----------------------- | ----- |
+| Checkout crash       | Technical Issues        | 58%   |
+| iPhone compatibility | Product Quality         | 33%   |
+| Refund request       | Refund/Return           | 92%   |
 
 ---
 
