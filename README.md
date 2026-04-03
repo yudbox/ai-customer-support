@@ -1,14 +1,48 @@
 # AI Customer Support
 
+> **🚀 Production-Ready MVP** | Multi-Agent AI System with Human-in-the-Loop Workflow
+
 AI-powered customer support system with intelligent ticket routing, sentiment analysis, and automated responses using LangGraph multi-agent workflow.
+
+## 🎯 Project Status
+
+**MVP Complete (90%+)** - Deployed to Vercel Production
+
+### ✅ Implemented Features
+
+- ✅ **6 AI Agents** (Intake, Classification, Sentiment, Customer Lookup, RAG, Priority)
+- ✅ **LangGraph Multi-Agent Orchestration** with PostgreSQL Checkpointer
+- ✅ **Human-in-the-Loop (HITL)** - Manager approval for HIGH/CRITICAL tickets
+- ✅ **Manager Dashboard** - Real-time approval system with SSE streaming
+- ✅ **Customer UI** - 6 demo scenarios with live workflow tracking
+- ✅ **Pinecone RAG** - 85 resolved tickets for similarity search
+- ✅ **tRPC API Layer** - Type-safe client-server communication
+- ✅ **PostgreSQL Database** - 9 tables (6 active, 3 reserved for Phase 5)
+- ✅ **Vercel Deployment** - Production-ready with Exit Code: 0
+
+### 🔄 In Progress (Phase 5)
+
+- 🔄 **Testing** (Priority #1) - Unit + Integration tests (target: 70%+ coverage)
+- ⏸️ **Analytics Dashboard** - KPIs, metrics, performance tracking
+- ⏸️ **Slack Integration** - Real-time notifications
+- ⏸️ **Admin Panel** - Configuration management
+- ⏸️ **Product Q&A Agent** - Activate products table
+- ⏸️ **Refund Automation** - Activate refunds table
+- ⏸️ **Shipment Tracking** - Activate shipments table
+
+**📋 Full Roadmap:** See `docs/PHASE_5_POST_MVP_STRATEGY.md`
+
+---
 
 ## Tech Stack
 
 - **Frontend:** Next.js 15 (App Router), React 19, TailwindCSS 4
+- **Backend:** tRPC, Server-Sent Events (SSE)
 - **Database:** PostgreSQL 16 (TypeORM)
 - **AI/ML:** LangGraph, OpenAI GPT-3.5, HuggingFace Sentiment Analysis
 - **Vector Database:** Pinecone (text-embedding-3-small, 1536 dimensions)
 - **Infrastructure:** Docker, Vercel
+- **Testing:** Jest, React Testing Library (in progress)
 
 ## 🤖 Multi-Agent AI Workflow
 
@@ -55,8 +89,40 @@ The system uses a **6-agent LangGraph workflow** for intelligent ticket processi
 - Formula: base + tier_boost + sentiment_penalty + category_urgency + rag_modifier
 - Override rules: ANGRY sentiment, Technical+ANGRY, VIP+ANGRY, Revenue-blocking
 - Levels: CRITICAL (15 min), HIGH (1 hr), MEDIUM (4 hrs), LOW (24 hrs)
-- Human-in-the-loop: HIGH/CRITICAL tickets require manager approval
+- **Human-in-the-Loop:** HIGH/CRITICAL tickets require manager approval
 - **Status:** ✅ Implemented
+
+### 🔄 Human-in-the-Loop (HITL) Workflow
+
+**LangGraph Interrupt System:**
+
+```typescript
+// Workflow pauses after Priority Agent if score ≥ 70 (HIGH/CRITICAL)
+const workflow = new StateGraph<WorkflowState>()
+  .addNode("priorityAgent", priorityNode)
+  .addEdge("priorityAgent", "finalizeTicket")
+  .compile({
+    checkpointer: postgresSaver, // Persists state
+    interruptAfter: ["priorityAgent"], // Pause here
+  });
+
+// Manager approves/rejects via tRPC API
+await workflow.updateState(threadId, {
+  status: "APPROVED",
+  manager_notes: "Approved - assign to VIP team",
+});
+
+// Workflow resumes from checkpoint
+await workflow.invoke(null, { configurable: { thread_id: threadId } });
+```
+
+**Manager Dashboard Features:**
+
+- ✅ Real-time ticket queue with SSE streaming
+- ✅ Approve/Reject with notes
+- ✅ Edit suggested resolution before approval
+- ✅ View full AI analysis (sentiment, priority, RAG results)
+- ✅ PostgreSQL Checkpointer for state persistence
 
 ### Workflow Architecture
 
@@ -73,7 +139,11 @@ START
   ↓
 [Agent 5: Resolution Search] → Find similar tickets (Pinecone)
   ↓
-[Agent 6: Priority] → Calculate urgency ✅
+[Agent 6: Priority] → Calculate urgency (0-100)
+  ↓
+[INTERRUPT if score ≥ 70] → Manager Dashboard (HITL) 🛑
+  ↓
+[Continue after approval] → Finalize Ticket ✅
   ↓
 END → Assign to team
 ```
@@ -237,7 +307,24 @@ npm run dev          # Start Next.js dev server (localhost:3000)
 npm run build        # Production build
 npm run start        # Start production server
 npm run lint         # Run ESLint
+npm run type         # TypeScript type checking
 ```
+
+### Testing (Phase 5.1 - In Progress)
+
+```bash
+npm test             # Run all tests (unit + integration)
+npm run test:unit    # Run unit tests only
+npm run test:int     # Run integration tests only
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Generate coverage report
+```
+
+**Test Configuration:**
+
+- **Unit Tests:** `jest.config.js` - Tests for agent nodes, utils, components
+- **Integration Tests:** `jest.integration.config.js` - Tests for workflow, API routes
+- **Target Coverage:** 70%+ (statements, branches, functions, lines)
 
 ### Database
 
@@ -252,29 +339,34 @@ npm run seed:clear             # Clear all data + reseed
 
 ### Vector Database (Pinecone)
 
-```bash
+````bash
 # Migrate resolved tickets to Pinecone
 npx tsx scripts/seed-pinecone-tickets.ts
 
 # Output:
 # ✅ 85 tickets migrated to Pinecone
-# Namespace: support-tickets
-# Embeddings: text-embedding-3-small (1536 dims)
-# Cost: ~$0.0017
-```
+# 9 Tables with UUID Primary Keys:**
 
-### Data Generation
+### Core Tables (6 - Active in MVP)
+- ✅ **customers** - Customer profiles (VIP/Regular/New tiers)
+- ✅ **tickets** - Support tickets with priority/sentiment/routing
+- ✅ **orders** - Purchase orders with JSONB items
+- ✅ **categories** - Ticket categories for AI routing
+- ✅ **teams** - Support teams with members
+- ✅ **ticket_workflow_state** - LangGraph checkpointer (HITL state persistence)
 
-```bash
-npm run generate:customers     # Generate customers.json
-# For other tables, use: npx tsx scripts/generate-<table>.ts
-```
+### Reserved Tables (3 - Phase 5 Features)
+- ⏸️ **products** - Product catalog with specs (Phase 5.2: Product Q&A Agent)
+- ⏸️ **refunds** - Refund requests linked to tickets (Phase 5.4: Refund Automation)
+- ⏸️ **shipments** - Order tracking with event history (Phase 5.5: Shipment Tracking)
 
----
+**Key Features:**
 
-## 🗄️ Database Schema
-
-**8 Tables with UUID Primary Keys:**
+- Foreign Keys with CASCADE/SET NULL
+- Composite Index: `(status, priority_score)` on tickets
+- PostgreSQL ENUM types for status fields
+- JSONB fields for flexible data (items, events, specs, compatibility)
+- **LangGraph Checkpointer** - ticket_workflow_state table for HITL persistence
 
 - **customers** - Customer profiles (VIP/Regular/New tiers)
 - **orders** - Purchase orders with JSONB items
@@ -314,7 +406,7 @@ FROM tickets t
 JOIN customers c ON t.customer_id = c.id
 LEFT JOIN orders o ON t.order_id = o.id
 LIMIT 10;
-```
+````
 
 ---
 
@@ -383,38 +475,183 @@ npm install
 ai-customer-support/
 ├── app/                       # Next.js App Router
 │   ├── page.tsx              # Customer support form
-│   ├── manager/              # Manager dashboard
+│   ├── manager/              # Manager dashboard (HITL approval)
 │   └── api/
-│       ├── tickets/          # Ticket CRUD + streaming
+│       ├── tickets/          # Ticket CRUD + SSE streaming
 │       └── trpc/             # tRPC API routes
 ├── lib/
 │   ├── database/
 │   │   ├── data-source.ts        # TypeORM configuration
-│   │   ├── entities/             # TypeORM entities (8 tables)
+│   │   ├── entities/             # TypeORM entities (9 tables)
 │   │   └── migrations/           # Database migrations
 │   ├── langgraph/
 │   │   ├── workflow.ts           # 6-agent LangGraph workflow
+│   │   ├── checkpointer/         # PostgreSQL checkpointer (HITL)
 │   │   └── agentNodes/           # Individual agent implementations
 │   │       ├── intakeNode.ts
 │   │       ├── classificationNode.ts
 │   │       ├── sentimentNode.ts
 │   │       ├── customerNode.ts
 │   │       ├── resolutionSearchNode.ts  # Pinecone RAG
-│   │       └── priorityNode.ts          # Priority calculation
+│   │       └── priorityNode.ts          # Priority calculation + HITL trigger
+│   ├── trpc/
+│   │   ├── routers/              # tRPC API routers
+│   │   │   ├── tickets.ts        # Ticket CRUD operations
+│   │   │   └── workflow.ts       # Workflow state management
+│   │   └── context.ts            # tRPC context
 │   ├── services/
 │   │   └── embeddings.ts         # OpenAI embedding service
 │   ├── clients/
 │   │   └── pinecone.ts           # Pinecone client singleton
 │   └── types/
 │       └── agents.ts             # TypeScript interfaces for agents
+├── components/
+│   ├── ui/                       # Reusable UI components
+│   └── manager/                  # Manager dashboard components
 ├── scripts/
-│   ├── generate-*.ts             # Seed data generators (8 tables)
+│   ├── generate-*.ts             # Seed data generators (9 tables)
 │   ├── seed-database.ts          # PostgreSQL seeder
 │   └── seed-pinecone-tickets.ts  # Pinecone migration (85 tickets)
 ├── data/                         # Generated JSON seed files
+├── docs/                         # Project documentation
+│   ├── PHASE_5_POST_MVP_STRATEGY.md  # Post-MVP roadmap
+│   └── *.md                      # Other documentation
+├── jest.config.js                # Unit test configuration
+├── jest.integration.config.js    # Integration test configuration
+├── jest.setup.js                 # Jest global setup
 ├── docker-compose.yml            # PostgreSQL container
 └── .env.local                    # Environment variables
 ```
+
+**Note:** Test infrastructure is configured (Jest configs ready), but test files to be implemented in Phase 5.1.
+
+---
+
+│ │ ├── customerNode.ts
+│ │ ├── resolutionSearchNode.ts # Pinecone RAG
+│ │ └── priorityNode.ts # Priority calculation
+│ ├── services/
+│ │ └── embeddings.ts # OpenAI embedding service
+│ ├── clients/
+│ │ └── pinecone.ts # Pinecone client singleton
+│ └── types/
+│ └── agents.ts # TypeScript interfaces for agents
+├── scripts/
+│ ├── generate-\*.ts # Seed data generators (8 tables)
+│ ├── seed-database.ts # PostgreSQL seeder
+│ └── seed-pinecone-tickets.ts # Pinecone migration (85 tickets)
+├── data/ # Generated JSON seed files
+├── docker-compose.yml # PostgreSQL container
+└── .env.local # Environment variables
+
+````
+
+---
+
+## 🧪 Testing Guide (Phase 5.1)
+
+### Setup Testing Environment
+
+**1. Install dependencies:**
+
+```bash
+npm install
+````
+
+**New dependencies added:**
+
+```json
+{
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@types/jest": "^29.5.14"
+  }
+}
+```
+
+**2. Test configurations created:**
+
+- **`jest.config.js`** - Unit tests configuration
+  - Tests: `lib/**/__tests__`, `components/**/__tests__`, `app/**/__tests__`
+  - Coverage: Agent nodes, utils, components
+  - Target: 70%+ coverage
+- **`jest.integration.config.js`** - Integration tests configuration
+  - Tests: `tests/integration/**`
+  - Coverage: API routes, workflow, tRPC routers
+  - Timeout: 30s (for workflow tests)
+
+- **`jest.setup.js`** - Global test setup
+  - Mocks environment variables
+  - Configures testing-library
+
+### Running Tests
+
+```bash
+# Run all tests (unit + integration)
+npm test
+
+# Run unit tests only
+npm run test:unit
+
+# Run integration tests only
+npm run test:int
+
+# Watch mode (auto-rerun on changes)
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Test Structure (Ready for Implementation)
+
+**Test Infrastructure Configured:**
+
+- ✅ Jest config files created (`jest.config.js`, `jest.integration.config.js`)
+- ✅ Test setup configured (`jest.setup.js`)
+- ✅ NPM scripts ready
+- ⏸️ Test files to be implemented (Phase 5.1)
+
+**Planned Test Coverage:**
+
+**Unit Tests (Target Directory: `lib/langgraph/agentNodes/__tests__/`):**
+
+- Priority scoring algorithm tests
+- HuggingFace sentiment mapping tests
+- OpenAI classification tests
+- Customer tier detection tests
+
+**Integration Tests (Target Directory: `tests/integration/`):**
+
+- Full 6-agent workflow tests
+- Human-in-the-loop interrupt tests
+- tRPC API endpoint tests
+- Pinecone RAG similarity search tests
+
+### Coverage Goals
+
+| Category   | Target | Priority |
+| ---------- | ------ | -------- |
+| Statements | 70%+   | 🔴 HIGH  |
+| Branches   | 70%+   | 🔴 HIGH  |
+| Functions  | 70%+   | 🔴 HIGH  |
+| Lines      | 70%+   | 🔴 HIGH  |
+
+**Coverage Reports (when implemented):**
+
+- Unit: `coverage/unit/`
+- Integration: `coverage/integration/`
+- Combined: View in terminal after `npm run test:coverage`
+
+**Next Steps for Testing:**
+
+1. Create test files in appropriate directories
+2. Implement unit tests for agent nodes
+3. Implement integration tests for workflows
+4. Achieve 70%+ coverage target
 
 ---
 
