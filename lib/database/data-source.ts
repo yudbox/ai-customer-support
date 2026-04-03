@@ -8,6 +8,7 @@ import { Product } from "./entities/Product";
 import { Category } from "./entities/Category";
 import { Team } from "./entities/Team";
 import { Refund } from "./entities/Refund";
+import { TicketWorkflowState } from "./entities/TicketWorkflowState";
 
 // Load .env.local только локально (на Vercel env vars автоматически доступны)
 if (process.env.NODE_ENV !== "production") {
@@ -53,7 +54,7 @@ export const AppDataSource = new DataSource({
   type: "postgres",
   ...getDatabaseConfig(),
   synchronize: false, // ⚠️ false в production! Используем migrations
-  logging: process.env.NODE_ENV === "development",
+  logging: false, // Disabled SQL query logs for cleaner console
   entities: [
     Customer,
     Order,
@@ -63,6 +64,7 @@ export const AppDataSource = new DataSource({
     Category,
     Team,
     Refund,
+    TicketWorkflowState,
   ],
   // Migrations НЕ нужны в Next.js runtime
   // Используются только в CLI командах (npm run migration:run)

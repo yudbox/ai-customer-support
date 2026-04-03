@@ -53,7 +53,7 @@ export function ManagerSidebar({
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {tickets.map((ticket) => (
+            {tickets.map((ticket: NonNullable<typeof tickets>[number]) => (
               <button
                 key={ticket.id}
                 onClick={() => onSelectTicket(ticket.id)}

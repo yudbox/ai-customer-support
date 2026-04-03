@@ -8,6 +8,7 @@ import { Product } from "./entities/Product";
 import { Category } from "./entities/Category";
 import { Team } from "./entities/Team";
 import { Refund } from "./entities/Refund";
+import { TicketWorkflowState } from "./entities/TicketWorkflowState";
 
 // Load .env.local для CLI команд
 const { config } = require("dotenv");
@@ -55,7 +56,7 @@ const AppDataSource = new DataSource({
   type: "postgres",
   ...getDatabaseConfig(),
   synchronize: false,
-  logging: true, // Включаем логи для CLI
+  logging: false, // Disabled SQL query logs (enable if needed for debugging migrations)
   entities: [
     Customer,
     Order,
@@ -65,6 +66,7 @@ const AppDataSource = new DataSource({
     Category,
     Team,
     Refund,
+    TicketWorkflowState,
   ],
   // В CLI можем использовать glob patterns
   migrations: ["lib/database/migrations/*.ts"],

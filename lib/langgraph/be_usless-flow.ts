@@ -23,9 +23,16 @@ import { createWorkflow } from "./workflow";
  * Используется для тестов, бэкграунд jobs, CLI
  *
  * @param input - данные тикета
+ * @param options - опциональные параметры (thread_id, ticket_id)
  * @returns Финальное состояние workflow
  */
-export async function runWorkflow(input: CustomerTicketInput) {
+export async function runWorkflow(
+  input: CustomerTicketInput,
+  options?: {
+    thread_id?: string;
+    ticket_id?: string;
+  },
+) {
   console.log("\n" + "=".repeat(80));
   console.log("🚀 STARTING WORKFLOW");
   console.log("=".repeat(80) + "\n");
@@ -34,6 +41,7 @@ export async function runWorkflow(input: CustomerTicketInput) {
 
   const initialState = {
     input,
+    ticket_id: options?.ticket_id,
     created_at: new Date().toISOString(),
     status: TicketStatus.OPEN,
     needs_approval: false,
@@ -41,7 +49,12 @@ export async function runWorkflow(input: CustomerTicketInput) {
   };
 
   try {
-    const result = await app.invoke(initialState);
+    // 🎯 Pass thread_id to checkpointer if provided
+    const config = options?.thread_id
+      ? { configurable: { thread_id: options.thread_id } }
+      : undefined;
+
+    const result = await app.invoke(initialState, config);
 
     console.log("\n" + "=".repeat(80));
     console.log("✅ WORKFLOW COMPLETED");
@@ -81,5 +94,15 @@ export async function runWorkflowForTicketId(ticketId: string) {
     attachments: [],
   };
 
-  await runWorkflow(input);
+  // 🔑 Use thread_id from ticket for checkpointer
+  const threadId = ticket.thread_id;
+  console.log(
+    `[runWorkflowForTicketId] Starting workflow with thread_id: ${threadId}`,
+  );
+
+  // ✅ Reuse runWorkflow with thread_id and ticket_id
+  return await runWorkflow(input, {
+    thread_id: threadId,
+    ticket_id: ticketId,
+  });
 }

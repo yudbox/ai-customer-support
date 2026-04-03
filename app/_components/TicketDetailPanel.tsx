@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { SentimentLabel } from "@/lib/types/common";
 
 interface TicketDetailPanelProps {
@@ -10,8 +12,17 @@ interface TicketDetailPanelProps {
 }
 
 export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
-  const [isModifying, setIsModifying] = useState(false);
+  const router = useRouter();
   const [selectedTeam, setSelectedTeam] = useState("technical_support");
+  const [resolutionText, setResolutionText] = useState("");
+  const [selectedSimilarIndex, setSelectedSimilarIndex] = useState<
+    number | null
+  >(null);
+
+  // Modal states
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data: ticket, isLoading } = trpc.tickets.getById.useQuery(
     { id: ticketId! },
@@ -25,18 +36,28 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
       { enabled: !!ticketId },
     );
 
+  // Auto-populate resolution when AI recommendations load
+  useEffect(() => {
+    if (aiRecommendations?.suggested_solution && !resolutionText && ticketId) {
+      setResolutionText(aiRecommendations.suggested_solution);
+    }
+  }, [aiRecommendations, ticketId]);
+
   const utils = trpc.useUtils();
 
   const approveMutation = trpc.tickets.approve.useMutation({
-    onSuccess: () => {
-      alert("Ticket approved successfully!");
+    onSuccess: (_, variables) => {
       utils.tickets.getPendingApproval.invalidate();
+      // Redirect to homepage to show ticket processing completion
+      router.push(`/?approved=${variables.id}`);
     },
   });
 
   const rejectMutation = trpc.tickets.reject.useMutation({
-    onSuccess: () => {
-      alert("Ticket rejected successfully!");
+    onSuccess: (_, variables) => {
+      utils.tickets.getPendingApproval.invalidate();
+      // Redirect to homepage to show ticket rejection completion
+      router.push(`/?rejected=${variables.id}`);
     },
   });
 
@@ -79,29 +100,35 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
   }
 
   const handleApprove = () => {
-    const hasAIRecommendations = aiRecommendations?.suggested_solution;
-
-    const message = hasAIRecommendations
-      ? `Approve this ticket with AI recommended solution?\n\nTeam: ${selectedTeam}\nSolution: ${aiRecommendations?.suggested_solution?.substring(0, 100)}...`
-      : `Approve and assign this ticket to ${selectedTeam}?\n\nNo AI recommendations available - team will investigate manually.`;
-
-    if (confirm(message)) {
-      approveMutation.mutate({
-        id: ticket.id,
-        assigned_team: selectedTeam,
-        resolution: aiRecommendations?.suggested_solution,
-      });
+    if (!resolutionText.trim()) {
+      return; // Disable button if no resolution
     }
+    setShowApproveModal(true);
+  };
+
+  const confirmApprove = () => {
+    approveMutation.mutate({
+      id: ticket.id,
+      assigned_team: selectedTeam,
+      resolution: resolutionText,
+    });
+    setShowApproveModal(false);
   };
 
   const handleReject = () => {
-    const reason = prompt("Enter rejection reason:");
-    if (reason) {
-      rejectMutation.mutate({
-        id: ticket.id,
-        reason,
-      });
+    setShowRejectModal(true);
+  };
+
+  const confirmReject = () => {
+    if (!rejectReason.trim()) {
+      return; // Prevent submission without reason
     }
+    rejectMutation.mutate({
+      id: ticket.id,
+      reason: rejectReason.trim(),
+    });
+    setShowRejectModal(false);
+    setRejectReason("");
   };
 
   return (
@@ -250,33 +277,49 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
           ) : aiRecommendations?.similar_tickets &&
             aiRecommendations.similar_tickets.length > 0 ? (
             <div className="space-y-4">
-              {aiRecommendations.similar_tickets.map((similar, idx) => (
-                <div
-                  key={idx}
-                  className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-bold text-blue-700">
-                          [{(similar.similarity * 100).toFixed(0)}% match]
-                        </span>
-                        <span className="text-sm text-gray-600">
-                          {similar.subject}
-                        </span>
+              {aiRecommendations.similar_tickets.map((similar, idx) => {
+                const isSelected = selectedSimilarIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setResolutionText(similar.resolution);
+                      setSelectedSimilarIndex(idx);
+                    }}
+                    className={`border-l-4 p-4 rounded cursor-pointer transition-colors ${
+                      isSelected
+                        ? "border-green-500 bg-green-50 hover:bg-green-100"
+                        : "border-blue-500 bg-blue-50 hover:bg-blue-100"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-bold text-blue-700">
+                            [{(similar.similarity * 100).toFixed(0)}% match]
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            {similar.subject}
+                          </span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium text-gray-700">
+                            Resolution:
+                          </span>
+                          <p className="mt-1 text-gray-600">
+                            {similar.resolution}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-700">
-                          Resolution:
-                        </span>
-                        <p className="mt-1 text-gray-600">
-                          {similar.resolution}
-                        </p>
-                      </div>
+                      {isSelected && (
+                        <div className="text-green-600 text-2xl font-bold ml-2">
+                          ✓
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {aiRecommendations.suggested_solution && (
                 <div className="mt-4 bg-green-50 border-l-4 border-green-500 p-4 rounded">
@@ -300,6 +343,56 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Resolution Editor */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">✍️ Resolution</h2>
+            <div className="flex gap-2">
+              {aiRecommendations?.suggested_solution && (
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    setResolutionText(aiRecommendations.suggested_solution!)
+                  }
+                  className="text-sm"
+                >
+                  🤖 Use AI Solution
+                </Button>
+              )}
+              <Button
+                variant="secondary"
+                onClick={() => setResolutionText("")}
+                className="text-sm"
+              >
+                ✏️ Write Custom
+              </Button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <textarea
+              value={resolutionText}
+              onChange={(e) => setResolutionText(e.target.value)}
+              placeholder="Enter resolution for this ticket... (required)"
+              rows={6}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+            />
+            <div className="mt-2 flex items-center justify-between">
+              <span
+                className={`text-xs ${
+                  resolutionText.trim()
+                    ? "text-green-600 font-medium"
+                    : "text-red-500"
+                }`}
+              >
+                {resolutionText.trim()
+                  ? `✓ ${resolutionText.length} characters`
+                  : "⚠️ Resolution required"}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -337,30 +430,107 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
               ❌ Reject
             </Button>
             <Button
-              variant="secondary"
-              onClick={() => setIsModifying(!isModifying)}
-            >
-              ✏️ Modify
-            </Button>
-            <Button
               variant="primary"
               onClick={handleApprove}
-              disabled={approveMutation.isPending}
+              disabled={approveMutation.isPending || !resolutionText.trim()}
               className="ml-auto"
             >
               ✅ Approve & Assign to {selectedTeam.replace("_", " ")}
             </Button>
           </div>
-
-          {isModifying && (
-            <div className="mt-4 p-4 bg-gray-50 rounded">
-              <p className="text-sm text-gray-600">
-                Modify functionality coming soon...
-              </p>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Approve Confirmation Modal */}
+      <Modal
+        isOpen={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        title="Confirm Approval"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to approve this ticket and assign it to{" "}
+            <span className="font-semibold">
+              {selectedTeam.replace("_", " ")}
+            </span>
+            ?
+          </p>
+
+          <div className="bg-gray-50 p-3 rounded border border-gray-200">
+            <p className="text-sm font-medium text-gray-700 mb-1">
+              Resolution:
+            </p>
+            <p className="text-sm text-gray-600">
+              {resolutionText.substring(0, 200)}
+              {resolutionText.length > 200 ? "..." : ""}
+            </p>
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowApproveModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={confirmApprove}
+              disabled={approveMutation.isPending}
+            >
+              {approveMutation.isPending
+                ? "Approving..."
+                : "✅ Confirm Approval"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reject Reason Modal */}
+      <Modal
+        isOpen={showRejectModal}
+        onClose={() => {
+          setShowRejectModal(false);
+          setRejectReason("");
+        }}
+        title="Reject Ticket"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Please provide a reason for rejecting this ticket:
+          </p>
+
+          <textarea
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            rows={4}
+            placeholder="Enter rejection reason..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            autoFocus
+          />
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowRejectModal(false);
+                setRejectReason("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmReject}
+              disabled={rejectMutation.isPending || !rejectReason.trim()}
+            >
+              {rejectMutation.isPending
+                ? "Rejecting..."
+                : "❌ Confirm Rejection"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -12,4 +12,5 @@ export { Select } from "./select";
 export { Sidebar } from "./sidebar";
 export { SidebarToggle } from "./sidebar-toggle";
 export { Toast } from "./toast";
+export { Modal } from "./modal";
 export type { ToastProps, ToastVariant } from "./toast";

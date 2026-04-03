@@ -12,7 +12,7 @@ import {
   createEmbedding,
   formatTicketForEmbedding,
 } from "@/lib/services/embeddings";
-// import { runWorkflowForTicketId } from "@/lib/langgraph/workflow";
+import { resumeWorkflow } from "@/lib/langgraph/workflow";
 
 /**
  * Generate ticket number: TKT-YYYY-MMDD-XXXX
@@ -107,12 +107,18 @@ export const ticketsRouter = router({
       const savedTicket = await ticketRepo.save(ticket);
       console.log("[tickets.create] Ticket saved", savedTicket.id);
 
-      // Запустить Intake Agent workflow (fire-and-forget)
+      // Generate thread_id for LangGraph checkpoint (Phase 1: MVP approach)
+      const threadId = `ticket-${savedTicket.id}`;
+      savedTicket.thread_id = threadId;
+      await ticketRepo.save(savedTicket);
+      console.log("[tickets.create] thread_id generated and saved", threadId);
+
+      // 🚀 Run workflow in background (fire-and-forget)
       // runWorkflowForTicketId(savedTicket.id).catch((err) => {
-      //   console.error("Workflow error:", err);
+      //   console.error("[tickets.create] Workflow error:", err);
       // });
 
-      // Return typed response сразу
+      // Return typed response immediately
       console.log("[tickets.create] Returning response");
       return {
         ticket_number: savedTicket.ticket_number,
@@ -124,25 +130,40 @@ export const ticketsRouter = router({
 
   /**
    * Получить список pending approval тикетов для Manager Dashboard
+   * Ищет тикеты с активными checkpoints (workflow остановлен на WAIT_APPROVAL)
    */
   getPendingApproval: publicProcedure.query(async () => {
     const connection = await getDataSource();
-    const ticketRepo = connection.getRepository(Ticket);
 
-    const tickets = await ticketRepo.find({
-      where: { status: TicketStatus.PENDING_APPROVAL },
-      relations: ["customer"],
-      order: { priority_score: "DESC", created_at: "DESC" },
-    });
+    // ✅ Ищем тикеты с активными checkpoints в ticket_workflow_states
+    // Это точнее чем status, т.к. checkpoint создается при interruptAfter: [WAIT_APPROVAL]
+    const tickets = await connection.query(`
+      SELECT 
+        t.id,
+        t.ticket_number,
+        t.subject,
+        t.status,
+        t.priority,
+        t.priority_score,
+        t.sentiment_label,
+        t.created_at,
+        c.email as customer_email,
+        c.tier as customer_tier
+      FROM tickets t
+      INNER JOIN ticket_workflow_states tws ON tws.thread_id = t.thread_id
+      LEFT JOIN customers c ON c.id = t.customer_id
+      WHERE t.thread_id IS NOT NULL
+      ORDER BY tws.created_at DESC
+    `);
 
-    return tickets.map((ticket) => ({
+    return tickets.map((ticket: any) => ({
       id: ticket.id,
       ticket_number: ticket.ticket_number,
       subject: ticket.subject,
       status: ticket.status,
       priority: ticket.priority,
       priority_score: ticket.priority_score,
-      customer_tier: ticket.customer?.tier,
+      customer_tier: ticket.customer_tier,
       sentiment_label: ticket.sentiment_label,
       created_at: ticket.created_at,
     }));
@@ -203,6 +224,7 @@ export const ticketsRouter = router({
 
   /**
    * Approve тикет (Manager action)
+   * Phase 1: Uses thread_id to resume workflow from checkpoint
    */
   approve: publicProcedure
     .input(
@@ -224,56 +246,102 @@ export const ticketsRouter = router({
         throw new Error("Ticket not found");
       }
 
-      // Auto-assign team member if not provided
-      let finalAssignedTo = input.assigned_to;
-      let finalAssignedTeam = input.assigned_team;
+      // Phase 1: Get thread_id for LangGraph workflow resume
+      const threadId = ticket.thread_id;
+      console.log(
+        `[tickets.approve] thread_id for workflow resume: ${threadId}`,
+      );
 
-      if (!finalAssignedTo) {
-        // Map selected team code to Team entity name using enum
-        const teamNameMap: Record<string, TeamName> = {
-          [TeamCode.TECHNICAL_SUPPORT]: TeamName.TECHNICAL_SUPPORT,
-          [TeamCode.CUSTOMER_SERVICE]: TeamName.TECHNICAL_SUPPORT, // Fallback
-          [TeamCode.BILLING]: TeamName.BILLING_PAYMENTS,
-          [TeamCode.BILLING_TEAM]: TeamName.BILLING_PAYMENTS,
-          [TeamCode.ESCALATION]: TeamName.TECHNICAL_SUPPORT, // Escalation → Technical
-          [TeamCode.LOGISTICS_TEAM]: TeamName.SHIPPING_DELIVERY,
-          [TeamCode.SHIPPING_TEAM]: TeamName.SHIPPING_DELIVERY,
-          [TeamCode.RETURNS_TEAM]: TeamName.RETURNS_REFUNDS,
-          [TeamCode.PRODUCT_ISSUES]: TeamName.PRODUCT_ISSUES,
-          [TeamCode.ACCOUNT_MANAGEMENT]: TeamName.ACCOUNT_MANAGEMENT,
-        };
+      // 🔄 Resume workflow from checkpoint
+      if (threadId) {
+        await resumeWorkflow(threadId, {
+          resolution: input.resolution,
+          assigned_team: input.assigned_team,
+          needs_approval: false, // 🔓 unlock workflow
+        });
 
-        const teamName =
-          teamNameMap[input.assigned_team] || TeamName.TECHNICAL_SUPPORT;
-        const team = await teamRepo.findOne({ where: { name: teamName } });
+        // 🔄 Reload ticket to get workflow updates
+        const updatedTicket = await ticketRepo.findOne({
+          where: { id: input.id },
+          relations: ["customer"],
+        });
 
-        if (team && team.members.length > 0) {
-          // Randomly select a member
-          const randomIndex = Math.floor(Math.random() * team.members.length);
-          finalAssignedTo = team.members[randomIndex];
-          finalAssignedTeam = team.name; // Use actual team name from DB
-          console.log(
-            `✅ Manager approved - assigned to ${team.name} → ${finalAssignedTo}`,
-          );
+        if (!updatedTicket) {
+          throw new Error("Ticket not found after workflow resume");
         }
-      }
 
-      // Update ticket
-      ticket.status = TicketStatus.IN_PROGRESS;
-      ticket.assigned_team = finalAssignedTeam;
-      if (finalAssignedTo) {
-        ticket.assigned_to = finalAssignedTo;
-      }
-      if (input.resolution) {
-        ticket.resolution = input.resolution;
-      }
+        // Only add assigned_to if not already set by workflow
+        if (!updatedTicket.assigned_to) {
+          // Map selected team code to Team entity name
+          const teamNameMap: Record<string, TeamName> = {
+            [TeamCode.TECHNICAL_SUPPORT]: TeamName.TECHNICAL_SUPPORT,
+            [TeamCode.CUSTOMER_SERVICE]: TeamName.TECHNICAL_SUPPORT,
+            [TeamCode.BILLING]: TeamName.BILLING_PAYMENTS,
+            [TeamCode.BILLING_TEAM]: TeamName.BILLING_PAYMENTS,
+            [TeamCode.ESCALATION]: TeamName.TECHNICAL_SUPPORT,
+            [TeamCode.LOGISTICS_TEAM]: TeamName.SHIPPING_DELIVERY,
+            [TeamCode.SHIPPING_TEAM]: TeamName.SHIPPING_DELIVERY,
+            [TeamCode.RETURNS_TEAM]: TeamName.RETURNS_REFUNDS,
+            [TeamCode.PRODUCT_ISSUES]: TeamName.PRODUCT_ISSUES,
+            [TeamCode.ACCOUNT_MANAGEMENT]: TeamName.ACCOUNT_MANAGEMENT,
+          };
 
-      await ticketRepo.save(ticket);
+          const teamName =
+            teamNameMap[input.assigned_team] || TeamName.TECHNICAL_SUPPORT;
+          const team = await teamRepo.findOne({ where: { name: teamName } });
 
-      return {
-        success: true,
-        ticket_number: ticket.ticket_number,
-      };
+          if (team && team.members.length > 0) {
+            const randomIndex = Math.floor(Math.random() * team.members.length);
+            updatedTicket.assigned_to = team.members[randomIndex];
+            console.log(
+              `✅ Assigned to ${team.name} → ${updatedTicket.assigned_to}`,
+            );
+          }
+        }
+
+        // Clear thread_id and update ticket
+        console.log(
+          `[tickets.approve] Clearing thread_id - workflow completed for ${updatedTicket.ticket_number}`,
+        );
+
+        // Update assigned_to if set
+        if (updatedTicket.assigned_to) {
+          await ticketRepo.update(updatedTicket.id, {
+            assigned_to: updatedTicket.assigned_to,
+          });
+        }
+
+        // Clear thread_id using raw SQL to ensure NULL is set
+        await ticketRepo
+          .createQueryBuilder()
+          .update()
+          .set({ thread_id: () => "NULL" })
+          .where("id = :id", { id: updatedTicket.id })
+          .execute();
+
+        return {
+          success: true,
+          ticket_number: updatedTicket.ticket_number,
+        };
+      } else {
+        console.warn(
+          `[tickets.approve] No thread_id found - manual approval only`,
+        );
+
+        // Fallback: manual approval without workflow
+        ticket.status = TicketStatus.IN_PROGRESS;
+        ticket.assigned_team = input.assigned_team;
+        if (input.resolution) {
+          ticket.resolution = input.resolution;
+        }
+
+        await ticketRepo.save(ticket);
+
+        return {
+          success: true,
+          ticket_number: ticket.ticket_number,
+        };
+      }
     }),
 
   /**
@@ -291,11 +359,25 @@ export const ticketsRouter = router({
         throw new Error("Ticket not found");
       }
 
-      // Update ticket
+      // Update ticket status and resolution
       ticket.status = TicketStatus.REJECTED;
       ticket.resolution = `Rejected by manager: ${input.reason}`;
 
       await ticketRepo.save(ticket);
+
+      // Clear thread_id (workflow is terminated, no resume possible)
+      if (ticket.thread_id) {
+        console.log(
+          `[tickets.reject] Clearing thread_id - workflow terminated for ${ticket.ticket_number}`,
+        );
+
+        await ticketRepo
+          .createQueryBuilder()
+          .update()
+          .set({ thread_id: () => "NULL" })
+          .where("id = :id", { id: ticket.id })
+          .execute();
+      }
 
       return {
         success: true,

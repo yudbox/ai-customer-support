@@ -53,6 +53,7 @@ export enum WorkflowStep {
   CUSTOMER_AGENT = "customerAgent",
   RESOLUTION_SEARCH_AGENT = "resolutionSearchAgent",
   PRIORITY_AGENT = "priorityAgent",
+  WAIT_APPROVAL = "waitApproval", // ⏸️ Special node for HITL interrupt
   FINALIZE_TICKET = "finalizeTicket",
   SAVE_TO_DATABASE = "saveToDatabase",
   COMPLETE = "complete",

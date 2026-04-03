@@ -100,27 +100,30 @@ export async function autoSelectTeam(
  * Router function for human-in-the-loop
  * Determines next node based on priority score
  *
- * HIGH/CRITICAL priority → requires manager approval
- * LOW/MEDIUM priority → auto-process
+ * HIGH/CRITICAL priority → requires manager approval (workflow STOPS here)
+ * LOW/MEDIUM priority → auto-process (continues to FINALIZE_TICKET)
  *
  * @param state - Current workflow state
- * @returns Next node name (WorkflowStep.FINALIZE_TICKET)
+ * @returns Next node name: WAIT_APPROVAL or FINALIZE_TICKET
  */
 export function routePriority(state: typeof WorkflowState.State): string {
   if (state.needs_approval) {
     console.log(
       "⏸️  Ticket requires manager approval (HIGH/CRITICAL priority)",
     );
-    console.log("   → Status: Pending Approval");
+    console.log("   → Routing to WAIT_APPROVAL node");
+    console.log("   → Workflow will PAUSE after this node");
     console.log(
       `   → Priority: ${state.priority?.level} (${state.priority?.score}/100)`,
     );
-  } else {
-    console.log("✅ Ticket processing - checking for auto-resolution");
-    console.log(
-      `   → Priority: ${state.priority?.level} (${state.priority?.score}/100)`,
-    );
+    return WorkflowStep.WAIT_APPROVAL;
   }
 
+  // All other cases: continue to finalization
+  console.log("✅ Ticket processing - checking for auto-resolution");
+  console.log(
+    `   → Priority: ${state.priority?.level} (${state.priority?.score}/100)`,
+  );
+  console.log("   → Continuing to FINALIZE_TICKET node");
   return WorkflowStep.FINALIZE_TICKET;
 }

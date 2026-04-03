@@ -21,6 +21,7 @@ export const AGENT_DISPLAY_NAMES: Record<WorkflowStep, string> = {
   [WorkflowStep.CUSTOMER_AGENT]: "Customer Lookup Agent",
   [WorkflowStep.RESOLUTION_SEARCH_AGENT]: "Resolution Search Agent",
   [WorkflowStep.PRIORITY_AGENT]: "Priority Agent",
+  [WorkflowStep.WAIT_APPROVAL]: "⏸️ Waiting for Manager Approval",
   [WorkflowStep.FINALIZE_TICKET]: "Finalize Ticket",
   [WorkflowStep.SAVE_TO_DATABASE]: "Save to Database",
   [WorkflowStep.COMPLETE]: "Workflow Complete",

@@ -27,6 +27,7 @@ export enum TicketPriority {
 @Index(["status", "priority_score"]) // Manager Dashboard главный query
 @Index(["category"])
 @Index(["created_at"])
+@Index(["thread_id"]) // Workflow checkpoint lookup
 export class Ticket {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -117,6 +118,10 @@ export class Ticket {
 
   @Column({ type: "int", nullable: true })
   time_to_resolve_minutes?: number;
+
+  // Workflow checkpoint (LangGraph HITL)
+  @Column({ type: "varchar", length: 255, nullable: true })
+  thread_id?: string; // Format: "ticket-{id}" - key for LangGraph checkpointer
 
   @CreateDateColumn()
   created_at: Date;

@@ -1,6 +1,6 @@
 /**
  * Finalize Ticket Node
- * 
+ *
  * Last decision point before saving to database
  * Determines ticket status and assignment strategy
  */
@@ -11,12 +11,12 @@ import { RAG_AUTO_RESOLVE_THRESHOLD } from "../constants";
 
 /**
  * Finalize ticket - last step before workflow ends
- * 
+ *
  * Implements automation strategy:
  * 1. HIGH/CRITICAL priority → Always requires manager approval
  * 2. LOW/MEDIUM + high RAG confidence → Auto-resolve
  * 3. LOW/MEDIUM + low RAG confidence → Send to manager
- * 
+ *
  * @param state - Current workflow state
  * @returns Status update (PENDING_APPROVAL or RESOLVED)
  */
@@ -26,10 +26,21 @@ export async function finalizeTicketNode(state: WorkflowStateType) {
   // HIGH/CRITICAL - requires manager approval
   if (state.needs_approval) {
     console.log(
-      "   → Escalated to manager for approval (HIGH/CRITICAL priority)"
+      "   → Escalated to manager for approval (HIGH/CRITICAL priority)",
     );
     return {
       status: TicketStatus.PENDING_APPROVAL,
+    };
+  }
+
+  // ✅ MANAGER APPROVED - resolution provided by manager (HITL resume)
+  if (state.resolution && state.assigned_team) {
+    console.log("   ✅ Manager approved - ticket assigned to team");
+    console.log(`   → Team: ${state.assigned_team}`);
+    console.log(`   → Resolution: ${state.resolution.substring(0, 60)}...`);
+
+    return {
+      status: TicketStatus.IN_PROGRESS,
     };
   }
 
@@ -47,10 +58,10 @@ export async function finalizeTicketNode(state: WorkflowStateType) {
     // Full automation - AI can resolve this ticket
     console.log("   ✅ Auto-resolved with RAG solution");
     console.log(
-      `   → Similarity: ${(state.rag!.similar_tickets[0].similarity * 100).toFixed(0)}%`
+      `   → Similarity: ${(state.rag!.similar_tickets[0].similarity * 100).toFixed(0)}%`,
     );
     console.log(
-      `   → Solution: ${state.rag!.suggested_solution?.substring(0, 50)}...`
+      `   → Solution: ${state.rag!.suggested_solution?.substring(0, 50)}...`,
     );
 
     return {
