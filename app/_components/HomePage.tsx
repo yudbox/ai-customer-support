@@ -1,48 +1,65 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { useToast } from "@/lib/contexts";
+import { QUERY_PARAMS } from "@/lib/types/common";
+
 import { TicketForm } from "./TicketForm";
 import { TicketStream } from "./TicketStream";
-import { useToast } from "@/lib/contexts";
 
 export function HomePage() {
-  const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(
-    null,
-  );
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
 
-  // Check for approved/rejected ticket query params
-  useEffect(() => {
-    const approvedTicketId = searchParams.get("approved");
-    const rejectedTicketId = searchParams.get("rejected");
+  // State only for tickets created via form
+  const [ticketIdFromForm, setTicketIdFromForm] = useState<string | null>(null);
 
+  // Track processed IDs to avoid duplicate toast notifications
+  const processedRef = useRef<Set<string>>(new Set());
+
+  // Get ticket ID from URL (approved/rejected from manager)
+  const ticketIdFromUrl =
+    searchParams.get(QUERY_PARAMS.APPROVED) ||
+    searchParams.get(QUERY_PARAMS.REJECTED);
+
+  // Combined ticket ID: URL takes precedence over form
+  const ticketId = ticketIdFromUrl || ticketIdFromForm;
+
+  // Handle reset: clear both form state and URL params
+  const handleReset = () => {
+    setTicketIdFromForm(null);
+    router.replace("/"); // Clear query params
+  };
+
+  // Show toast notifications for approved/rejected tickets
+  useEffect(() => {
+    if (!ticketIdFromUrl || processedRef.current.has(ticketIdFromUrl)) {
+      return;
+    }
+
+    processedRef.current.add(ticketIdFromUrl);
+
+    const approvedTicketId = searchParams.get(QUERY_PARAMS.APPROVED);
     if (approvedTicketId) {
-      // Show the approved ticket in stream (will display completion status)
-      setSubmittedTicketId(approvedTicketId);
       showToast({
         message: "✅ Ticket Approved!",
         description: `Processing workflow completion...`,
         variant: "success",
         duration: 3000,
       });
-      // Clear query param
-      router.replace("/", { scroll: false });
-    } else if (rejectedTicketId) {
-      // Show the rejected ticket in stream (will display rejection status)
-      setSubmittedTicketId(rejectedTicketId);
+    } else {
       showToast({
         message: "❌ Ticket Rejected",
         description: `Ticket has been rejected and closed.`,
         variant: "warning",
         duration: 3000,
       });
-      // Clear query param
-      router.replace("/", { scroll: false });
     }
-  }, [searchParams, router, showToast]);
+  }, [ticketIdFromUrl, searchParams, showToast]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -51,15 +68,12 @@ export function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left: Ticket Form */}
           <div>
-            <TicketForm onSubmitSuccess={setSubmittedTicketId} />
+            <TicketForm onSubmitSuccess={setTicketIdFromForm} />
           </div>
 
           {/* Right: Processing Stream */}
           <div>
-            <TicketStream
-              ticketId={submittedTicketId}
-              onReset={() => setSubmittedTicketId(null)}
-            />
+            <TicketStream ticketId={ticketId} onReset={handleReset} />
           </div>
         </div>
       </div>

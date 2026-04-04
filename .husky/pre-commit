@@ -1,0 +1,5 @@
+echo "🔍 Running type check..."
+npm run type
+
+echo "🧹 Running linter..."
+npm run lint

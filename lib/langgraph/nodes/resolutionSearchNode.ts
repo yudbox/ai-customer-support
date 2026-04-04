@@ -1,10 +1,10 @@
-import type { WorkflowStateType } from "../state/WorkflowState";
-import { TicketStatus } from "@/lib/types/common";
 import { pineconeIndex, PINECONE_NAMESPACE } from "../../clients/pinecone";
 import {
   createEmbedding,
   formatTicketForEmbedding,
 } from "../../services/embeddings";
+
+import type { WorkflowStateType } from "../state/WorkflowState";
 
 /**
  * Node 5: Resolution Search Agent

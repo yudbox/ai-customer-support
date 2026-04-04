@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+
 import { faker } from "@faker-js/faker";
 import { v4 as uuidv4 } from "uuid";
 
@@ -64,18 +65,28 @@ function parseArguments(): GenerateOptions {
   return { filename, count, customersFile, productsFile };
 }
 
+interface CustomerRecord extends Record<string, unknown> {
+  id: string;
+}
+
+interface ProductRecord extends Record<string, unknown> {
+  id: string;
+  name: string;
+  price: number;
+}
+
 function loadCustomers(filename: string): string[] {
   const filePath = path.resolve(__dirname, "../data", filename);
-  const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-  return data.map((c: any) => c.id);
+  const data: CustomerRecord[] = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  return data.map((c) => c.id);
 }
 
 function loadProducts(
   filename: string,
 ): Array<{ id: string; name: string; price: number }> {
   const filePath = path.resolve(__dirname, "../data", filename);
-  const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-  return data.map((p: any) => ({ id: p.id, name: p.name, price: p.price }));
+  const data: ProductRecord[] = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  return data.map((p) => ({ id: p.id, name: p.name, price: p.price }));
 }
 
 function generateOrderNumber(index: number): string {

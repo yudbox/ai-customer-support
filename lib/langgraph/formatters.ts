@@ -6,6 +6,7 @@
  */
 
 import { WorkflowStep, TicketStatus } from "@/lib/types/common";
+import type { TicketState } from "@/lib/types/workflow";
 
 // ===========================
 // TYPES
@@ -15,7 +16,10 @@ import { WorkflowStep, TicketStatus } from "@/lib/types/common";
  * Type для функций-форматтеров
  * Принимает nodeData от агента, возвращает строку для UI
  */
-type AgentFormatter = (nodeData: any, initialState?: any) => string;
+type AgentFormatter = (
+  nodeData: Partial<TicketState>,
+  initialState?: Partial<TicketState>,
+) => string;
 
 // ===========================
 // FORMATTERS
@@ -24,7 +28,7 @@ type AgentFormatter = (nodeData: any, initialState?: any) => string;
 /**
  * Intake Agent formatter
  */
-function formatIntakeMessage(nodeData: any): string {
+function formatIntakeMessage(nodeData: Partial<TicketState>): string {
   if (!nodeData || !("intake" in nodeData)) {
     return "Analysis complete";
   }
@@ -48,7 +52,7 @@ function formatIntakeMessage(nodeData: any): string {
 /**
  * Classification Agent formatter
  */
-function formatClassificationMessage(nodeData: any): string {
+function formatClassificationMessage(nodeData: Partial<TicketState>): string {
   if (!nodeData || !("classification" in nodeData)) {
     return "Analysis complete";
   }
@@ -68,7 +72,7 @@ function formatClassificationMessage(nodeData: any): string {
 /**
  * Sentiment Agent formatter
  */
-function formatSentimentMessage(nodeData: any): string {
+function formatSentimentMessage(nodeData: Partial<TicketState>): string {
   if (!nodeData || !("sentiment" in nodeData)) {
     return "Analysis complete";
   }
@@ -82,7 +86,7 @@ function formatSentimentMessage(nodeData: any): string {
 /**
  * Customer Lookup Agent formatter
  */
-function formatCustomerMessage(nodeData: any): string {
+function formatCustomerMessage(nodeData: Partial<TicketState>): string {
   if (!nodeData || !("customer" in nodeData)) {
     return "Analysis complete";
   }
@@ -110,7 +114,7 @@ function formatCustomerMessage(nodeData: any): string {
 /**
  * Resolution Search (RAG) Agent formatter
  */
-function formatRAGMessage(nodeData: any): string {
+function formatRAGMessage(nodeData: Partial<TicketState>): string {
   if (!nodeData || !("rag" in nodeData)) {
     return "Analysis complete";
   }
@@ -133,7 +137,7 @@ function formatRAGMessage(nodeData: any): string {
 /**
  * Priority Agent formatter
  */
-function formatPriorityMessage(nodeData: any): string {
+function formatPriorityMessage(nodeData: Partial<TicketState>): string {
   if (!nodeData || !("priority" in nodeData)) {
     return "Analysis complete";
   }
@@ -147,7 +151,7 @@ function formatPriorityMessage(nodeData: any): string {
 /**
  * Finalize Ticket formatter
  */
-function formatFinalizeMessage(nodeData: any): string {
+function formatFinalizeMessage(nodeData: Partial<TicketState>): string {
   const needsApproval = nodeData?.needs_approval;
 
   return needsApproval
@@ -158,7 +162,10 @@ function formatFinalizeMessage(nodeData: any): string {
 /**
  * Save to Database formatter
  */
-function formatSaveMessage(nodeData: any, initialState?: any): string {
+function formatSaveMessage(
+  nodeData: Partial<TicketState>,
+  initialState?: Partial<TicketState>,
+): string {
   const status = nodeData?.status || initialState?.status;
 
   return status === TicketStatus.PENDING_APPROVAL
@@ -204,8 +211,8 @@ const AGENT_MESSAGE_FORMATTERS: Partial<Record<WorkflowStep, AgentFormatter>> =
  */
 export function formatAgentMessage(
   nodeName: string,
-  nodeData: any,
-  initialState?: any,
+  nodeData: Partial<TicketState>,
+  initialState?: Partial<TicketState>,
 ): string {
   const formatter = AGENT_MESSAGE_FORMATTERS[nodeName as WorkflowStep];
 

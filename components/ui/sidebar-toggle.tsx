@@ -1,4 +1,5 @@
 import { ButtonHTMLAttributes } from "react";
+
 import { cn } from "@/lib/utils/cn";
 
 interface SidebarToggleProps extends ButtonHTMLAttributes<HTMLButtonElement> {

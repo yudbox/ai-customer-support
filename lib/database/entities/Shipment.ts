@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,6 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
+
 import type { Order } from "./Order";
 
 export enum ShipmentStatus {

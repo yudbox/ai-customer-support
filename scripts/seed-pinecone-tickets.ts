@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as dotenv from "dotenv";
+
 import { Pinecone } from "@pinecone-database/pinecone";
+import * as dotenv from "dotenv";
 import { OpenAI } from "openai";
 
 /**

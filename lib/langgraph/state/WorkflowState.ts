@@ -1,5 +1,5 @@
 import { Annotation } from "@langchain/langgraph";
-import type { CustomerTicketInput, TicketStatus } from "../../types/common";
+
 import type {
   IntakeOutput,
   ClassificationOutput,
@@ -9,6 +9,7 @@ import type {
   PriorityOutput,
   AssignmentOutput,
 } from "../../types/agents";
+import type { CustomerTicketInput, TicketStatus } from "../../types/common";
 
 /**
  * State для всего workflow

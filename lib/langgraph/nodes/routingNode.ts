@@ -5,11 +5,12 @@
  */
 
 import { getDataSource } from "@/lib/database/connection";
-import { Team } from "@/lib/database/entities/Team";
 import { Category } from "@/lib/database/entities/Category";
-import type { WorkflowStateType } from "../state/WorkflowState";
-import { WorkflowState } from "../state/WorkflowState";
+import { Team } from "@/lib/database/entities/Team";
 import { WorkflowStep } from "@/lib/types/common";
+
+import { WorkflowState } from "../state/WorkflowState";
+
 
 // ===========================
 // TYPES

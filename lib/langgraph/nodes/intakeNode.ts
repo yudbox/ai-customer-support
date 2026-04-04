@@ -1,6 +1,8 @@
-import type { WorkflowStateType } from "../state/WorkflowState";
 import { TicketStatus } from "@/lib/types/common";
+
 import { intakeAgent } from "../agents/intake";
+
+import type { WorkflowStateType } from "../state/WorkflowState";
 
 /**
  * Node 1: Intake Agent

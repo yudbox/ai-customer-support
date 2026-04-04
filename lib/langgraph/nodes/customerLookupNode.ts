@@ -1,7 +1,8 @@
-import type { WorkflowStateType } from "../state/WorkflowState";
-import type { CustomerLookupOutput } from "@/lib/types/agents";
 import { getDataSource } from "@/lib/database/connection";
 import { Customer } from "@/lib/database/entities/Customer";
+import type { CustomerLookupOutput } from "@/lib/types/agents";
+
+import type { WorkflowStateType } from "../state/WorkflowState";
 
 export async function customerLookupNode(
   state: WorkflowStateType,

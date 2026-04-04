@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,10 +9,12 @@ import {
   OneToMany,
   JoinColumn,
 } from "typeorm";
+
+import { TicketStatus, SentimentLabel } from "@/lib/types/common";
+
 import type { Customer } from "./Customer";
 import type { Order } from "./Order";
 import type { Refund } from "./Refund";
-import { TicketStatus, SentimentLabel } from "@/lib/types/common";
 
 export enum TicketPriority {
   CRITICAL = "critical",
