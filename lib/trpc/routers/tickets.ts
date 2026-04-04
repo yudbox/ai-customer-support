@@ -1,18 +1,20 @@
 import { z } from "zod";
-import { router, publicProcedure } from "../server";
+
+import { pineconeIndex, PINECONE_NAMESPACE } from "@/lib/clients/pinecone";
 import { getDataSource } from "@/lib/database/connection";
 import { Customer, CustomerTier } from "@/lib/database/entities/Customer";
-import { Ticket, TicketPriority } from "@/lib/database/entities/Ticket";
-import { Team } from "@/lib/database/entities/Team";
-import { TicketStatus, TeamName, TeamCode } from "@/lib/types/common";
 import { Order } from "@/lib/database/entities/Order";
-import { ticketFormSchema } from "@/lib/validations/ticket-form-schema";
-import { pineconeIndex, PINECONE_NAMESPACE } from "@/lib/clients/pinecone";
+import { Team } from "@/lib/database/entities/Team";
+import { Ticket, TicketPriority } from "@/lib/database/entities/Ticket";
+import { resumeWorkflow } from "@/lib/langgraph/workflow";
 import {
   createEmbedding,
   formatTicketForEmbedding,
 } from "@/lib/services/embeddings";
-import { resumeWorkflow } from "@/lib/langgraph/workflow";
+import { TicketStatus, TeamName, TeamCode } from "@/lib/types/common";
+import { ticketFormSchema } from "@/lib/validations/ticket-form-schema";
+
+import { router, publicProcedure } from "../server";
 
 /**
  * Generate ticket number: TKT-YYYY-MMDD-XXXX
@@ -135,9 +137,22 @@ export const ticketsRouter = router({
   getPendingApproval: publicProcedure.query(async () => {
     const connection = await getDataSource();
 
+    interface PendingTicketRow {
+      id: string;
+      ticket_number: string;
+      subject: string;
+      status: string;
+      priority: string | null;
+      priority_score: number | null;
+      sentiment_label: string | null;
+      created_at: Date;
+      customer_email: string | null;
+      customer_tier: string | null;
+    }
+
     // ✅ Ищем тикеты с активными checkpoints в ticket_workflow_states
     // Это точнее чем status, т.к. checkpoint создается при interruptAfter: [WAIT_APPROVAL]
-    const tickets = await connection.query(`
+    const tickets: PendingTicketRow[] = await connection.query(`
       SELECT 
         t.id,
         t.ticket_number,
@@ -156,7 +171,7 @@ export const ticketsRouter = router({
       ORDER BY tws.created_at DESC
     `);
 
-    return tickets.map((ticket: any) => ({
+    return tickets.map((ticket) => ({
       id: ticket.id,
       ticket_number: ticket.ticket_number,
       subject: ticket.subject,
@@ -270,6 +285,13 @@ export const ticketsRouter = router({
           throw new Error("Ticket not found after workflow resume");
         }
 
+        // Manually update ticket fields (workflow already completed, won't re-run)
+        updatedTicket.status = TicketStatus.RESOLVED;
+        updatedTicket.assigned_team = input.assigned_team;
+        if (input.resolution) {
+          updatedTicket.resolution = input.resolution;
+        }
+
         // Only add assigned_to if not already set by workflow
         if (!updatedTicket.assigned_to) {
           // Map selected team code to Team entity name
@@ -299,17 +321,13 @@ export const ticketsRouter = router({
           }
         }
 
+        // Save all updates
+        await ticketRepo.save(updatedTicket);
+
         // Clear thread_id and update ticket
         console.log(
           `[tickets.approve] Clearing thread_id - workflow completed for ${updatedTicket.ticket_number}`,
         );
-
-        // Update assigned_to if set
-        if (updatedTicket.assigned_to) {
-          await ticketRepo.update(updatedTicket.id, {
-            assigned_to: updatedTicket.assigned_to,
-          });
-        }
 
         // Clear thread_id using raw SQL to ensure NULL is set
         await ticketRepo

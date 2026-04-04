@@ -1,7 +1,8 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
 import { formatDistanceToNow } from "date-fns";
+
+import { trpc } from "@/lib/trpc/client";
 import { SentimentLabel } from "@/lib/types/common";
 
 interface ManagerSidebarProps {

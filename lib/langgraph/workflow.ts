@@ -1,23 +1,25 @@
-import { getDataSource } from "@/lib/database/connection";
-import { Ticket } from "@/lib/database/entities/Ticket";
 import { StateGraph, START, END } from "@langchain/langgraph";
-import { PostgresCheckpointSaver } from "./checkpointer/PostgresCheckpointSaver";
-import { WorkflowState } from "./state/WorkflowState";
-import type { CustomerTicketInput } from "@/lib/types/common";
-import { TicketStatus, WorkflowStep, TeamName } from "@/lib/types/common";
+
 import type { CustomerLookupOutput } from "@/lib/types/agents";
-import { intakeNode } from "./nodes/intakeNode";
-import { classificationNode } from "./nodes/classificationNode";
-import { sentimentNode } from "./nodes/sentimentNode";
-import { customerLookupNode } from "./nodes/customerLookupNode";
-import { resolutionSearchNode } from "./nodes/resolutionSearchNode";
-import { priorityNode } from "./nodes/priorityNode";
+import { TicketStatus, WorkflowStep } from "@/lib/types/common";
+import type { CustomerTicketInput } from "@/lib/types/common";
+import type { TicketState } from "@/lib/types/workflow";
+
+import { PostgresCheckpointSaver } from "./checkpointer/PostgresCheckpointSaver";
 import { AGENT_DISPLAY_NAMES, STREAM_DELAY_MS } from "./constants";
 import { formatAgentMessage } from "./formatters";
-import { routePriority } from "./nodes/routingNode";
+import { classificationNode } from "./nodes/classificationNode";
+import { customerLookupNode } from "./nodes/customerLookupNode";
 import { finalizeTicketNode } from "./nodes/finalizeTicketNode";
+import { intakeNode } from "./nodes/intakeNode";
+import { priorityNode } from "./nodes/priorityNode";
+import { resolutionSearchNode } from "./nodes/resolutionSearchNode";
+import { routePriority } from "./nodes/routingNode";
 import { saveToDatabaseNode } from "./nodes/saveToDatabaseNode";
+import { sentimentNode } from "./nodes/sentimentNode";
 import { waitApprovalNode } from "./nodes/waitApprovalNode";
+import { WorkflowState } from "./state/WorkflowState";
+
 import type {
   PriorityNodeOutput,
   FinalizeTicketNodeOutput,
@@ -97,6 +99,7 @@ export async function streamWorkflow(
   // Реализуем генератор для стриминга событий
   async function* eventGenerator() {
     let needsApproval = false; // Track if ticket needs approval
+    let finalStatus: TicketStatus = TicketStatus.OPEN; // Track actual final status
     let finalResolution: string | null | undefined;
     let finalAssignedTeam: string | null | undefined;
 
@@ -122,6 +125,7 @@ export async function streamWorkflow(
         // Capture automation data from finalizeTicket node
         if (nodeName === WorkflowStep.FINALIZE_TICKET) {
           const finalizeData = nodeData as FinalizeTicketNodeOutput;
+          finalStatus = finalizeData.status || TicketStatus.OPEN;
           finalResolution = finalizeData.resolution;
           finalAssignedTeam = finalizeData.assigned_team;
         }
@@ -141,8 +145,8 @@ export async function streamWorkflow(
         // Используем форматтер для получения детального сообщения
         const detailMessage = formatAgentMessage(
           nodeName,
-          nodeData,
-          initialState,
+          nodeData as Partial<TicketState>,
+          initialState as Partial<TicketState>,
         );
 
         yield {
@@ -155,18 +159,24 @@ export async function streamWorkflow(
     }
 
     // Финальный event для фронта
+    // Use actual status from finalizeTicket, not just needsApproval flag
+    const isPendingApproval = finalStatus === TicketStatus.PENDING_APPROVAL;
+    const isResolved = finalStatus === TicketStatus.RESOLVED;
+
     yield {
       step: WorkflowStep.COMPLETE,
-      status: needsApproval
-        ? TicketStatus.PENDING_APPROVAL
-        : TicketStatus.RESOLVED,
-      critical: needsApproval,
-      message: needsApproval
+      status: finalStatus,
+      critical: isPendingApproval,
+      message: isPendingApproval
         ? "Workflow paused - pending manager approval"
-        : "Workflow completed successfully",
-      detail: needsApproval
+        : isResolved
+          ? "Workflow completed successfully"
+          : "Ticket assigned to support team",
+      detail: isPendingApproval
         ? "Your ticket requires senior team review"
-        : "All agents have processed your ticket",
+        : isResolved
+          ? "All agents have processed your ticket"
+          : "Our team will review and respond",
       resolution: finalResolution,
       assigned_team: finalAssignedTeam,
     };

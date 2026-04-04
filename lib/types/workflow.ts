@@ -4,7 +4,6 @@
  * Типы для LangGraph workflow и streaming
  */
 
-import type { CustomerTicketInput, TicketStatus, AgentError } from "./common";
 import type {
   IntakeOutput,
   ClassificationOutput,
@@ -14,6 +13,7 @@ import type {
   PriorityOutput,
   AssignmentOutput,
 } from "./agents";
+import type { CustomerTicketInput, TicketStatus, AgentError } from "./common";
 
 // ===========================
 // WORKFLOW STATE
@@ -42,7 +42,7 @@ export interface TicketState {
   manager_notes?: string;
 
   // Metadata
-  ticket_id?: number; // после сохранения в БД
+  ticket_id?: string; // UUID после сохранения в БД
   created_at: string;
   updated_at: string;
   status: TicketStatus;
@@ -62,7 +62,7 @@ export interface AgentProgressEvent {
   agent: string;
   status: "started" | "completed" | "error";
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -71,6 +71,6 @@ export interface AgentProgressEvent {
  */
 export interface StreamEvent {
   event: string;
-  data: any;
+  data: string | Record<string, unknown>;
   id?: string;
 }

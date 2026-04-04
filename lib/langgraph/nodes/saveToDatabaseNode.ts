@@ -1,17 +1,18 @@
 /**
  * Save to Database Node
- * 
+ *
  * Persists workflow results to PostgreSQL
  * Updates ticket with all data collected by agents
  */
 
 import { getDataSource } from "@/lib/database/connection";
-import { Ticket } from "@/lib/database/entities/Ticket";
+import { Ticket, TicketPriority } from "@/lib/database/entities/Ticket";
+
 import type { WorkflowStateType } from "../state/WorkflowState";
 
 /**
  * Save results to database
- * 
+ *
  * Updates ticket with:
  * - Status (open, pending_approval, resolved)
  * - Priority (level, score)
@@ -19,7 +20,7 @@ import type { WorkflowStateType } from "../state/WorkflowState";
  * - Sentiment (label, score)
  * - Assignment (team, member)
  * - Resolution (if auto-resolved)
- * 
+ *
  * @param state - Current workflow state with ticket_id
  * @returns Empty object (no state changes)
  */
@@ -36,13 +37,14 @@ export async function saveToDatabaseNode(state: WorkflowStateType) {
     const ticketRepo = connection.getRepository(Ticket);
 
     // Prepare update data (only fields that exist in Ticket entity)
-    const updateData: any = {
+    const updateData: Partial<Ticket> = {
       status: state.status,
     };
 
     // Add priority data if available
     if (state.priority) {
-      updateData.priority = state.priority.level.toLowerCase(); // MEDIUM → medium
+      const priorityLevel = state.priority.level.toLowerCase();
+      updateData.priority = priorityLevel as TicketPriority;
       updateData.priority_score = state.priority.score;
     }
 
@@ -59,13 +61,13 @@ export async function saveToDatabaseNode(state: WorkflowStateType) {
     }
 
     // Add automation data (assigned_team, assigned_to, resolution)
-    if (state.assigned_team !== undefined) {
+    if (state.assigned_team != null) {
       updateData.assigned_team = state.assigned_team;
     }
-    if (state.assigned_to !== undefined) {
+    if (state.assigned_to != null) {
       updateData.assigned_to = state.assigned_to;
     }
-    if (state.resolution !== undefined) {
+    if (state.resolution != null) {
       updateData.resolution = state.resolution;
     }
 
@@ -76,7 +78,7 @@ export async function saveToDatabaseNode(state: WorkflowStateType) {
     console.log(`   Status: ${updateData.status}`);
     if (updateData.priority) {
       console.log(
-        `   Priority: ${updateData.priority} (${updateData.priority_score}/100)`
+        `   Priority: ${updateData.priority} (${updateData.priority_score}/100)`,
       );
     }
   } catch (error) {

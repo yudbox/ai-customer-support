@@ -1,15 +1,16 @@
 import "reflect-metadata";
 import * as fs from "fs";
 import * as path from "path";
+
 import { AppDataSource } from "../lib/database/data-source";
-import { Customer } from "../lib/database/entities/Customer";
-import { Product } from "../lib/database/entities/Product";
 import { Category } from "../lib/database/entities/Category";
-import { Team } from "../lib/database/entities/Team";
+import { Customer } from "../lib/database/entities/Customer";
 import { Order } from "../lib/database/entities/Order";
-import { Shipment } from "../lib/database/entities/Shipment";
-import { Ticket } from "../lib/database/entities/Ticket";
+import { Product } from "../lib/database/entities/Product";
 import { Refund } from "../lib/database/entities/Refund";
+import { Shipment } from "../lib/database/entities/Shipment";
+import { Team } from "../lib/database/entities/Team";
+import { Ticket } from "../lib/database/entities/Ticket";
 
 interface SeedOptions {
   clear?: boolean; // Clear existing data before seeding

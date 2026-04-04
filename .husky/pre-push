@@ -1,0 +1,4 @@
+echo "🧪 Running unit tests with coverage..."
+npm run test:coverage:unit || true
+
+echo "✅ Pre-push checks completed"

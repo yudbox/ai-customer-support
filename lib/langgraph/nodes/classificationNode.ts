@@ -1,6 +1,8 @@
-import type { WorkflowStateType } from "../state/WorkflowState";
 import { TicketStatus } from "@/lib/types/common";
+
 import { openai } from "../../clients/openai";
+
+import type { WorkflowStateType } from "../state/WorkflowState";
 
 /**
  * Node 2: Classification Agent
@@ -31,7 +33,7 @@ export async function classificationNode(
     let parsed;
     try {
       parsed = JSON.parse(responseText);
-    } catch (e) {
+    } catch (_e) {
       // fallback: extract JSON from text
       const match = responseText.match(/\{[\s\S]*\}/);
       parsed = match ? JSON.parse(match[0]) : null;

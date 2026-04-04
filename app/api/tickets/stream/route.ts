@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
-import { streamWorkflow } from "@/lib/langgraph/workflow";
+
 import { getDataSource } from "@/lib/database/connection";
 import { Ticket } from "@/lib/database/entities/Ticket";
+import { streamWorkflow } from "@/lib/langgraph/workflow";
 import type { CustomerLookupOutput } from "@/lib/types/agents";
 import { TicketStatus, WorkflowStep } from "@/lib/types/common";
 
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
         const encoder = new TextEncoder();
 
         // Helper to send event with delay
-        const sendEvent = (event: any, delay: number = 0) => {
+        const sendEvent = (event: StreamEvent, delay: number = 0) => {
           const timeoutId = setTimeout(() => {
             if (!isClosed) {
               controller.enqueue(
@@ -171,7 +172,7 @@ export async function GET(request: NextRequest) {
               isClosed = true;
               try {
                 controller.close();
-              } catch (error) {
+              } catch (_error) {
                 // Controller already closed, ignore
               }
             }
@@ -223,7 +224,7 @@ export async function GET(request: NextRequest) {
           isClosed = true;
           try {
             controller.close();
-          } catch (error) {
+          } catch (_error) {
             // Controller already closed, ignore
           }
         }

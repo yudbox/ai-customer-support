@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import { OpenAI } from "openai";
+
 import * as dotenv from "dotenv";
+import { OpenAI } from "openai";
 
 // Load environment variables from .env.local
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
@@ -14,7 +15,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
  * npx tsx scripts/enhance-resolutions.ts --file=tickets-2026-03-24.json
  */
 
-interface Ticket {
+interface Ticket extends Record<string, string | null | undefined> {
   id: string;
   ticket_number: string;
   subject: string;
@@ -23,7 +24,6 @@ interface Ticket {
   subcategory: string | null;
   status: string;
   resolution: string | null;
-  [key: string]: any;
 }
 
 const openai = new OpenAI({

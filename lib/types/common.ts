@@ -166,6 +166,14 @@ export enum TeamCode {
   ESCALATION = "escalation", // Escalation goes to Technical Support
 }
 
+/**
+ * Query parameter names for ticket workflow redirects
+ */
+export const QUERY_PARAMS = {
+  APPROVED: "approved",
+  REJECTED: "rejected",
+} as const;
+
 // ===========================
 // UTILITY TYPES
 // ===========================

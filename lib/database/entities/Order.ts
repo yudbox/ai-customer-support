@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,10 +9,11 @@ import {
   OneToMany,
   JoinColumn,
 } from "typeorm";
+
 import type { Customer } from "./Customer";
-import type { Ticket } from "./Ticket";
-import type { Shipment } from "./Shipment";
 import type { Refund } from "./Refund";
+import type { Shipment } from "./Shipment";
+import type { Ticket } from "./Ticket";
 
 export enum OrderStatus {
   PENDING = "pending",

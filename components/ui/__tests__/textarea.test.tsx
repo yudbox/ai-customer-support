@@ -1,8 +1,11 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import { Textarea } from "@/components/ui/textarea";
-import { createRef } from "react";
 import * as React from "react";
+import { createRef } from "react";
+
+import { render, screen, fireEvent } from "@testing-library/react";
+
+import "@testing-library/jest-dom";
+
+import { Textarea } from "@/components/ui/textarea";
 
 describe("Textarea Component", () => {
   describe("Rendering", () => {

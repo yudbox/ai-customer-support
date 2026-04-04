@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -6,6 +7,7 @@ import {
   Index,
   OneToMany,
 } from "typeorm";
+
 import type { Order } from "./Order";
 import type { Ticket } from "./Ticket";
 

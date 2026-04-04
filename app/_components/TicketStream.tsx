@@ -1,116 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useToast } from "@/lib/contexts";
+import { useTicketStream } from "@/hooks";
 import { TicketStatus, WorkflowStep } from "@/lib/types/common";
-
-interface StreamEvent {
-  step: string;
-  status: TicketStatus;
-  message: string;
-  detail?: string;
-  critical?: boolean;
-  resolution?: string | null;
-  assigned_team?: string | null;
-  assigned_to?: string | null;
-}
 
 interface TicketStreamProps {
   ticketId: string | null;
-  onComplete?: (isCritical: boolean) => void;
   onReset?: () => void;
 }
 
-export function TicketStream({
-  ticketId,
-  onComplete,
-  onReset,
-}: TicketStreamProps) {
-  const [events, setEvents] = useState<StreamEvent[]>([]);
-  const [isComplete, setIsComplete] = useState(false);
-  const [isCritical, setIsCritical] = useState(false);
-  const [resolution, setResolution] = useState<string | null>(null);
-  const [assignedTeam, setAssignedTeam] = useState<string | null>(null);
-  const [assignedTo, setAssignedTo] = useState<string | null>(null);
-
-  const { showToast } = useToast();
-
-  useEffect(() => {
-    // Reset state when new ticket is submitted
-    if (ticketId) {
-      setEvents([]);
-      setIsComplete(false);
-      setIsCritical(false);
-      setResolution(null);
-      setAssignedTeam(null);
-      setAssignedTo(null);
-    }
-  }, [ticketId]);
-
-  // Show toast notification when ticket is complete
-  useEffect(() => {
-    if (isComplete) {
-      showToast({
-        message: "Notification Sent",
-        description: resolution
-          ? "We've sent a confirmation email with the resolution details."
-          : isCritical
-            ? "Manager has been notified. You'll receive an email update within 60 minutes."
-            : "Support team has been notified and will respond via email.",
-        variant: resolution ? "success" : isCritical ? "warning" : "info",
-        duration: 5000,
-      });
-    }
-  }, [isComplete, resolution, isCritical, showToast]);
-
-  useEffect(() => {
-    if (!ticketId) return;
-
-    const eventSource = new EventSource(
-      `/api/tickets/stream?ticketId=${ticketId}`,
-    );
-
-    eventSource.onmessage = (event) => {
-      const data: StreamEvent = JSON.parse(event.data);
-
-      // Update or add event based on step
-      setEvents((prev) => {
-        const existingIndex = prev.findIndex((e) => e.step === data.step);
-        if (existingIndex >= 0) {
-          // Update existing event
-          const updated = [...prev];
-          updated[existingIndex] = data;
-          return updated;
-        } else {
-          // Add new event
-          return [...prev, data];
-        }
-      });
-
-      // Check if this is the final event
-      if (data.step === WorkflowStep.COMPLETE) {
-        setIsComplete(true);
-        setIsCritical(data.critical || false);
-        setResolution(data.resolution || null);
-        setAssignedTeam(data.assigned_team || null);
-        setAssignedTo(data.assigned_to || null);
-        eventSource.close();
-
-        // Notify parent component
-        if (onComplete) {
-          onComplete(data.critical || false);
-        }
-      }
-    };
-
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [ticketId, onComplete]);
+export function TicketStream({ ticketId, onReset }: TicketStreamProps) {
+  const {
+    events,
+    isComplete,
+    isCritical,
+    resolution,
+    assignedTeam,
+    assignedTo,
+  } = useTicketStream(ticketId);
 
   // Empty state - no ticket submitted yet
   if (!ticketId) {
@@ -133,7 +39,7 @@ export function TicketStream({
     );
   }
 
-  console.log("111111111111111111111111 events", events);
+  // console.log("111111111111111111111111 events", events);
 
   return (
     <div className="bg-white rounded-lg shadow-md h-[calc(100vh-8rem)] min-h-[600px] flex flex-col sticky top-8">

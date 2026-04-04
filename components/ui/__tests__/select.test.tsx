@@ -1,7 +1,10 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import { Select } from "@/components/ui/select";
 import { createRef } from "react";
+
+import { render, screen, fireEvent } from "@testing-library/react";
+
+import "@testing-library/jest-dom";
+
+import { Select } from "@/components/ui/select";
 
 describe("Select Component", () => {
   const defaultOptions = [

@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+
+import { Category } from "./entities/Category";
 import { Customer } from "./entities/Customer";
 import { Order } from "./entities/Order";
-import { Ticket } from "./entities/Ticket";
-import { Shipment } from "./entities/Shipment";
 import { Product } from "./entities/Product";
-import { Category } from "./entities/Category";
-import { Team } from "./entities/Team";
 import { Refund } from "./entities/Refund";
+import { Shipment } from "./entities/Shipment";
+import { Team } from "./entities/Team";
+import { Ticket } from "./entities/Ticket";
 import { TicketWorkflowState } from "./entities/TicketWorkflowState";
 
 // Load .env.local только локально (на Vercel env vars автоматически доступны)
@@ -50,24 +52,42 @@ function getDatabaseConfig() {
   };
 }
 
-export const AppDataSource = new DataSource({
-  type: "postgres",
-  ...getDatabaseConfig(),
-  synchronize: false, // ⚠️ false в production! Используем migrations
-  logging: false, // Disabled SQL query logs for cleaner console
-  entities: [
-    Customer,
-    Order,
-    Ticket,
-    Shipment,
-    Product,
-    Category,
-    Team,
-    Refund,
-    TicketWorkflowState,
-  ],
-  // Migrations НЕ нужны в Next.js runtime
-  // Используются только в CLI командах (npm run migration:run)
-  migrations: [],
-  subscribers: [],
+// Lazy initialization - create DataSource only when needed (not during import)
+let dataSource: DataSource | null = null;
+
+function createDataSource() {
+  return new DataSource({
+    type: "postgres",
+    ...getDatabaseConfig(),
+    synchronize: false, // ⚠️ false в production! Используем migrations
+    logging: false, // Disabled SQL query logs for cleaner console
+    entities: [
+      Customer,
+      Order,
+      Ticket,
+      Shipment,
+      Product,
+      Category,
+      Team,
+      Refund,
+      TicketWorkflowState,
+    ],
+    migrations: [],
+    subscribers: [],
+  });
+}
+
+// Export getter instead of instance
+export function getAppDataSource(): DataSource {
+  if (!dataSource) {
+    dataSource = createDataSource();
+  }
+  return dataSource;
+}
+
+// Keep backward compatibility - но теперь создается лениво
+export const AppDataSource = new Proxy({} as DataSource, {
+  get(_, prop) {
+    return getAppDataSource()[prop as keyof DataSource];
+  },
 });
