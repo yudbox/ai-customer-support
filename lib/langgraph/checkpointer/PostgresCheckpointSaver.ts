@@ -1,3 +1,4 @@
+import { RunnableConfig } from "@langchain/core/runnables";
 import {
   BaseCheckpointSaver,
   Checkpoint,
@@ -5,7 +6,7 @@ import {
   CheckpointMetadata,
   type CheckpointListOptions,
 } from "@langchain/langgraph-checkpoint";
-import { RunnableConfig } from "@langchain/core/runnables";
+
 import { getDataSource } from "@/lib/database/connection";
 import { TicketWorkflowState } from "@/lib/database/entities/TicketWorkflowState";
 
@@ -46,7 +47,7 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
    */
   async *list(
     config: RunnableConfig,
-    options?: CheckpointListOptions,
+    _options?: CheckpointListOptions,
   ): AsyncGenerator<CheckpointTuple> {
     const threadId = config.configurable?.thread_id;
     if (!threadId) return;
@@ -72,7 +73,7 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
     config: RunnableConfig,
     checkpoint: Checkpoint,
     metadata: CheckpointMetadata,
-    newVersions: ChannelVersions,
+    _newVersions: ChannelVersions,
   ): Promise<RunnableConfig> {
     const threadId = config.configurable?.thread_id;
     if (!threadId) {
@@ -104,9 +105,9 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
    * Для нашего простого случая - НЕ нужно
    */
   async putWrites(
-    config: RunnableConfig,
-    writes: any[],
-    taskId: string,
+    _config: RunnableConfig,
+    _writes: unknown[],
+    _taskId: string,
   ): Promise<void> {
     // Упрощенная версия - игнорируем writes
     // Они нужны только для сложных multi-step workflows

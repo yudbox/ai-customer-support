@@ -1,6 +1,7 @@
-import type { WorkflowStateType } from "../state/WorkflowState";
-import { SentimentLabel } from "@/lib/types/common";
 import { hf } from "@/lib/clients/huggingface";
+import { SentimentLabel } from "@/lib/types/common";
+
+import type { WorkflowStateType } from "../state/WorkflowState";
 
 /**
  * Маппинг HuggingFace labels на наши SentimentLabel

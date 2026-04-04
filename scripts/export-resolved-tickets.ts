@@ -1,9 +1,11 @@
 import "reflect-metadata";
 import * as fs from "fs";
 import * as path from "path";
+
+import { TicketStatus } from "@/lib/types/common";
+
 import { AppDataSource } from "../lib/database/data-source";
 import { Ticket } from "../lib/database/entities/Ticket";
-import { TicketStatus } from "@/lib/types/common";
 
 /**
  * Export RESOLVED tickets from PostgreSQL to JSON

@@ -1,8 +1,9 @@
 "use client";
 
 import { ReactNode } from "react";
-import { TRPCProvider } from "@/lib/trpc/provider";
+
 import { ToastProvider } from "@/lib/contexts";
+import { TRPCProvider } from "@/lib/trpc/provider";
 
 /**
  * Client-side providers wrapper

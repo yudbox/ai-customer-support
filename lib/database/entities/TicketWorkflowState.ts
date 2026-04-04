@@ -7,6 +7,8 @@ import {
   Index,
 } from "typeorm";
 
+import type { Checkpoint, CheckpointMetadata } from "@langchain/langgraph";
+
 /**
  * Entity для хранения workflow checkpoints (HITL паузы)
  * Используется для сохранения state при interruptAfter: [WAIT_APPROVAL]
@@ -20,10 +22,10 @@ export class TicketWorkflowState {
   checkpoint_id: string;
 
   @Column({ type: "jsonb" })
-  checkpoint_data: any; // LangGraph Checkpoint object
+  checkpoint_data: Checkpoint;
 
   @Column({ type: "jsonb", nullable: true })
-  metadata?: any; // CheckpointMetadata
+  metadata?: CheckpointMetadata;
 
   @CreateDateColumn()
   @Index()

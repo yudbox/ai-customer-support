@@ -47,7 +47,7 @@ const TIER_BOOST_NEW = 0;
 // Sentiment modifiers
 const SENTIMENT_ANGRY_PENALTY = -30;
 const SENTIMENT_POSITIVE_BONUS = 10;
-const SENTIMENT_NEUTRAL_MODIFIER = 0;
+// const SENTIMENT_NEUTRAL_MODIFIER = 0;
 
 // Category urgency points
 const URGENCY_PAYMENT = 20;

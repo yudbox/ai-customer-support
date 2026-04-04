@@ -5,9 +5,11 @@
  * Determines ticket status and assignment strategy
  */
 
-import type { WorkflowStateType } from "../state/WorkflowState";
 import { TicketStatus } from "@/lib/types/common";
+
 import { RAG_AUTO_RESOLVE_THRESHOLD } from "../constants";
+
+import type { WorkflowStateType } from "../state/WorkflowState";
 
 /**
  * Finalize ticket - last step before workflow ends

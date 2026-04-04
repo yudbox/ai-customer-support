@@ -26,7 +26,7 @@ export class Product {
   price: number;
 
   @Column({ type: "jsonb", nullable: true })
-  specs?: Record<string, any>;
+  specs?: Record<string, string | number | boolean>;
 
   @Column({ type: "jsonb", nullable: true })
   compatibility?: string[];

@@ -1,18 +1,20 @@
 import { z } from "zod";
-import { router, publicProcedure } from "../server";
+
+import { pineconeIndex, PINECONE_NAMESPACE } from "@/lib/clients/pinecone";
 import { getDataSource } from "@/lib/database/connection";
 import { Customer, CustomerTier } from "@/lib/database/entities/Customer";
-import { Ticket, TicketPriority } from "@/lib/database/entities/Ticket";
-import { Team } from "@/lib/database/entities/Team";
-import { TicketStatus, TeamName, TeamCode } from "@/lib/types/common";
 import { Order } from "@/lib/database/entities/Order";
-import { ticketFormSchema } from "@/lib/validations/ticket-form-schema";
-import { pineconeIndex, PINECONE_NAMESPACE } from "@/lib/clients/pinecone";
+import { Team } from "@/lib/database/entities/Team";
+import { Ticket, TicketPriority } from "@/lib/database/entities/Ticket";
+import { resumeWorkflow } from "@/lib/langgraph/workflow";
 import {
   createEmbedding,
   formatTicketForEmbedding,
 } from "@/lib/services/embeddings";
-import { resumeWorkflow } from "@/lib/langgraph/workflow";
+import { TicketStatus, TeamName, TeamCode } from "@/lib/types/common";
+import { ticketFormSchema } from "@/lib/validations/ticket-form-schema";
+
+import { router, publicProcedure } from "../server";
 
 /**
  * Generate ticket number: TKT-YYYY-MMDD-XXXX
@@ -135,9 +137,22 @@ export const ticketsRouter = router({
   getPendingApproval: publicProcedure.query(async () => {
     const connection = await getDataSource();
 
+    interface PendingTicketRow {
+      id: string;
+      ticket_number: string;
+      subject: string;
+      status: string;
+      priority: string | null;
+      priority_score: number | null;
+      sentiment_label: string | null;
+      created_at: Date;
+      customer_email: string | null;
+      customer_tier: string | null;
+    }
+
     // ✅ Ищем тикеты с активными checkpoints в ticket_workflow_states
     // Это точнее чем status, т.к. checkpoint создается при interruptAfter: [WAIT_APPROVAL]
-    const tickets = await connection.query(`
+    const tickets: PendingTicketRow[] = await connection.query(`
       SELECT 
         t.id,
         t.ticket_number,
@@ -156,7 +171,7 @@ export const ticketsRouter = router({
       ORDER BY tws.created_at DESC
     `);
 
-    return tickets.map((ticket: any) => ({
+    return tickets.map((ticket) => ({
       id: ticket.id,
       ticket_number: ticket.ticket_number,
       subject: ticket.subject,

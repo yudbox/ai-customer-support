@@ -1,21 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  getScenarioOptions,
   getScenarioById,
+  getScenarioOptions,
 } from "@/lib/constants/ticket-scenarios";
+import { trpc } from "@/lib/trpc/client";
 import {
   ticketFormSchema,
   type TicketFormData,
 } from "@/lib/validations/ticket-form-schema";
-import { trpc } from "@/lib/trpc/client";
 
 interface TicketFormProps {
   onSubmitSuccess?: (ticketId: string) => void;

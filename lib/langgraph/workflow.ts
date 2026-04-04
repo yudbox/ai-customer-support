@@ -1,23 +1,25 @@
-import { getDataSource } from "@/lib/database/connection";
-import { Ticket } from "@/lib/database/entities/Ticket";
 import { StateGraph, START, END } from "@langchain/langgraph";
-import { PostgresCheckpointSaver } from "./checkpointer/PostgresCheckpointSaver";
-import { WorkflowState } from "./state/WorkflowState";
-import type { CustomerTicketInput } from "@/lib/types/common";
-import { TicketStatus, WorkflowStep, TeamName } from "@/lib/types/common";
+
 import type { CustomerLookupOutput } from "@/lib/types/agents";
-import { intakeNode } from "./nodes/intakeNode";
-import { classificationNode } from "./nodes/classificationNode";
-import { sentimentNode } from "./nodes/sentimentNode";
-import { customerLookupNode } from "./nodes/customerLookupNode";
-import { resolutionSearchNode } from "./nodes/resolutionSearchNode";
-import { priorityNode } from "./nodes/priorityNode";
+import { TicketStatus, WorkflowStep } from "@/lib/types/common";
+import type { CustomerTicketInput } from "@/lib/types/common";
+import type { TicketState } from "@/lib/types/workflow";
+
+import { PostgresCheckpointSaver } from "./checkpointer/PostgresCheckpointSaver";
 import { AGENT_DISPLAY_NAMES, STREAM_DELAY_MS } from "./constants";
 import { formatAgentMessage } from "./formatters";
-import { routePriority } from "./nodes/routingNode";
+import { classificationNode } from "./nodes/classificationNode";
+import { customerLookupNode } from "./nodes/customerLookupNode";
 import { finalizeTicketNode } from "./nodes/finalizeTicketNode";
+import { intakeNode } from "./nodes/intakeNode";
+import { priorityNode } from "./nodes/priorityNode";
+import { resolutionSearchNode } from "./nodes/resolutionSearchNode";
+import { routePriority } from "./nodes/routingNode";
 import { saveToDatabaseNode } from "./nodes/saveToDatabaseNode";
+import { sentimentNode } from "./nodes/sentimentNode";
 import { waitApprovalNode } from "./nodes/waitApprovalNode";
+import { WorkflowState } from "./state/WorkflowState";
+
 import type {
   PriorityNodeOutput,
   FinalizeTicketNodeOutput,
@@ -141,8 +143,8 @@ export async function streamWorkflow(
         // Используем форматтер для получения детального сообщения
         const detailMessage = formatAgentMessage(
           nodeName,
-          nodeData,
-          initialState,
+          nodeData as Partial<TicketState>,
+          initialState as Partial<TicketState>,
         );
 
         yield {

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+
 import { useRouter } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
+
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { SentimentLabel } from "@/lib/types/common";
+import { trpc } from "@/lib/trpc/client";
+import { QUERY_PARAMS, SentimentLabel } from "@/lib/types/common";
 
 interface TicketDetailPanelProps {
   ticketId: string | null;
@@ -36,28 +38,19 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
       { enabled: !!ticketId },
     );
 
-  // Auto-populate resolution when AI recommendations load
-  useEffect(() => {
-    if (aiRecommendations?.suggested_solution && !resolutionText && ticketId) {
-      setResolutionText(aiRecommendations.suggested_solution);
-    }
-  }, [aiRecommendations, ticketId]);
-
   const utils = trpc.useUtils();
 
   const approveMutation = trpc.tickets.approve.useMutation({
     onSuccess: (_, variables) => {
       utils.tickets.getPendingApproval.invalidate();
-      // Redirect to homepage to show ticket processing completion
-      router.push(`/?approved=${variables.id}`);
+      router.push(`/?${QUERY_PARAMS.APPROVED}=${variables.id}`);
     },
   });
 
   const rejectMutation = trpc.tickets.reject.useMutation({
     onSuccess: (_, variables) => {
       utils.tickets.getPendingApproval.invalidate();
-      // Redirect to homepage to show ticket rejection completion
-      router.push(`/?rejected=${variables.id}`);
+      router.push(`/?${QUERY_PARAMS.REJECTED}=${variables.id}`);
     },
   });
 

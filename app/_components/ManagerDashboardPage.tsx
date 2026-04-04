@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+
+import { Sidebar, SidebarToggle } from "@/components/ui";
+
 import { ManagerSidebar } from "./ManagerSidebar";
 import { TicketDetailPanel } from "./TicketDetailPanel";
-import { Sidebar, SidebarToggle } from "@/components/ui";
 
 export function ManagerDashboardPage() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);

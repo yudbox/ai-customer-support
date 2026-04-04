@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { Sidebar } from "@/components/ui/sidebar";
 
 export function Header() {

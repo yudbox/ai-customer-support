@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 export type ToastVariant = "success" | "warning" | "info";
@@ -9,65 +8,29 @@ export interface ToastProps {
   message: string;
   description?: string;
   variant?: ToastVariant;
+  isVisible: boolean;
   duration?: number;
   onClose?: () => void;
-  show?: boolean;
 }
 
 /**
- * Toast notification component
- * Displays temporary notification messages with auto-dismiss
+ * Toast notification component (Pure presentation)
+ * State management is handled by ToastProvider
  *
  * @param message - Main notification message
  * @param description - Optional detailed description
  * @param variant - Visual style: success, warning, or info
- * @param duration - Auto-dismiss duration in milliseconds (default: 5000)
- * @param onClose - Callback when toast is closed
- * @param show - Control visibility from parent
+ * @param isVisible - Controls visibility animation
+ * @param onClose - Callback when toast is closed manually
  */
 export function Toast({
   message,
   description,
   variant = "info",
+  isVisible,
   duration = 5000,
   onClose,
-  show = true,
 }: ToastProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (show) {
-      // Show toast after short delay
-      const showTimer = setTimeout(() => {
-        setIsVisible(true);
-      }, 100);
-
-      // Auto-hide after duration
-      const hideTimer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(() => {
-          onClose?.();
-        }, 300); // Wait for animation to complete
-      }, duration + 100);
-
-      return () => {
-        clearTimeout(showTimer);
-        clearTimeout(hideTimer);
-      };
-    } else {
-      setIsVisible(false);
-    }
-  }, [show, duration, onClose]);
-
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(() => {
-      onClose?.();
-    }, 300);
-  };
-
-  if (!show) return null;
-
   const variants = {
     success: {
       gradient: "from-green-600 to-green-500",
@@ -123,7 +86,7 @@ export function Toast({
             {description && <p className="text-sm opacity-90">{description}</p>}
           </div>
           <button
-            onClick={handleClose}
+            onClick={onClose}
             className="flex-shrink-0 text-white/60 hover:text-white transition-colors"
             aria-label="Close notification"
           >
