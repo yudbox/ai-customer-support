@@ -99,6 +99,7 @@ export async function streamWorkflow(
   // Реализуем генератор для стриминга событий
   async function* eventGenerator() {
     let needsApproval = false; // Track if ticket needs approval
+    let finalStatus: TicketStatus = TicketStatus.OPEN; // Track actual final status
     let finalResolution: string | null | undefined;
     let finalAssignedTeam: string | null | undefined;
 
@@ -124,6 +125,7 @@ export async function streamWorkflow(
         // Capture automation data from finalizeTicket node
         if (nodeName === WorkflowStep.FINALIZE_TICKET) {
           const finalizeData = nodeData as FinalizeTicketNodeOutput;
+          finalStatus = finalizeData.status || TicketStatus.OPEN;
           finalResolution = finalizeData.resolution;
           finalAssignedTeam = finalizeData.assigned_team;
         }
@@ -157,18 +159,24 @@ export async function streamWorkflow(
     }
 
     // Финальный event для фронта
+    // Use actual status from finalizeTicket, not just needsApproval flag
+    const isPendingApproval = finalStatus === TicketStatus.PENDING_APPROVAL;
+    const isResolved = finalStatus === TicketStatus.RESOLVED;
+
     yield {
       step: WorkflowStep.COMPLETE,
-      status: needsApproval
-        ? TicketStatus.PENDING_APPROVAL
-        : TicketStatus.RESOLVED,
-      critical: needsApproval,
-      message: needsApproval
+      status: finalStatus,
+      critical: isPendingApproval,
+      message: isPendingApproval
         ? "Workflow paused - pending manager approval"
-        : "Workflow completed successfully",
-      detail: needsApproval
+        : isResolved
+          ? "Workflow completed successfully"
+          : "Ticket assigned to support team",
+      detail: isPendingApproval
         ? "Your ticket requires senior team review"
-        : "All agents have processed your ticket",
+        : isResolved
+          ? "All agents have processed your ticket"
+          : "Our team will review and respond",
       resolution: finalResolution,
       assigned_team: finalAssignedTeam,
     };

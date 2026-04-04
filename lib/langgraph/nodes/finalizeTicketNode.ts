@@ -25,8 +25,8 @@ import type { WorkflowStateType } from "../state/WorkflowState";
 export async function finalizeTicketNode(state: WorkflowStateType) {
   console.log("\n🏁 Finalizing ticket workflow...");
 
-  // HIGH/CRITICAL - requires manager approval
-  if (state.needs_approval) {
+  // HIGH/CRITICAL - requires manager approval (first pass)
+  if (state.needs_approval === true) {
     console.log(
       "   → Escalated to manager for approval (HIGH/CRITICAL priority)",
     );
@@ -35,14 +35,18 @@ export async function finalizeTicketNode(state: WorkflowStateType) {
     };
   }
 
-  // ✅ MANAGER APPROVED - resolution provided by manager (HITL resume)
-  if (state.resolution && state.assigned_team) {
-    console.log("   ✅ Manager approved - ticket assigned to team");
+  // ✅ MANAGER APPROVED - after HITL resume (needs_approval set to false by manager)
+  // If assigned_team is set, it means manager reviewed and approved
+  if (state.needs_approval === false && state.assigned_team) {
+    console.log("   ✅ Manager approved - ticket resolved");
     console.log(`   → Team: ${state.assigned_team}`);
-    console.log(`   → Resolution: ${state.resolution.substring(0, 60)}...`);
+    if (state.resolution) {
+      console.log(`   → Resolution: ${state.resolution.substring(0, 60)}...`);
+    }
 
     return {
-      status: TicketStatus.IN_PROGRESS,
+      status: TicketStatus.RESOLVED,
+      resolution: state.resolution || state.rag?.suggested_solution || null,
     };
   }
 

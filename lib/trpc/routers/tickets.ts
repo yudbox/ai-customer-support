@@ -285,6 +285,13 @@ export const ticketsRouter = router({
           throw new Error("Ticket not found after workflow resume");
         }
 
+        // Manually update ticket fields (workflow already completed, won't re-run)
+        updatedTicket.status = TicketStatus.RESOLVED;
+        updatedTicket.assigned_team = input.assigned_team;
+        if (input.resolution) {
+          updatedTicket.resolution = input.resolution;
+        }
+
         // Only add assigned_to if not already set by workflow
         if (!updatedTicket.assigned_to) {
           // Map selected team code to Team entity name
@@ -314,17 +321,13 @@ export const ticketsRouter = router({
           }
         }
 
+        // Save all updates
+        await ticketRepo.save(updatedTicket);
+
         // Clear thread_id and update ticket
         console.log(
           `[tickets.approve] Clearing thread_id - workflow completed for ${updatedTicket.ticket_number}`,
         );
-
-        // Update assigned_to if set
-        if (updatedTicket.assigned_to) {
-          await ticketRepo.update(updatedTicket.id, {
-            assigned_to: updatedTicket.assigned_to,
-          });
-        }
 
         // Clear thread_id using raw SQL to ensure NULL is set
         await ticketRepo
