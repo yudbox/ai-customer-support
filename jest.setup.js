@@ -19,8 +19,80 @@ import "@testing-library/jest-dom";
 import { ReadableStream } from "stream/web";
 global.ReadableStream = ReadableStream;
 
-// Note: Headers, Response, Request are available in Node.js 18+
-// If tests fail with "undefined", uncomment polyfills below
+// Response, Request, Headers polyfills for JSDOM test environment
+// Even though Node.js 18+ has these natively, JSDOM needs explicit polyfills
+if (typeof global.Headers === "undefined") {
+  global.Headers = class Headers extends Map {
+    constructor(init) {
+      super();
+      if (init) {
+        if (init instanceof Headers || init instanceof Map) {
+          for (const [key, value] of init.entries()) {
+            this.set(key, value);
+          }
+        } else if (typeof init === "object") {
+          for (const [key, value] of Object.entries(init)) {
+            this.set(key, value);
+          }
+        }
+      }
+    }
+    get(name) {
+      return super.get(name.toLowerCase()) || null;
+    }
+    set(name, value) {
+      super.set(name.toLowerCase(), value);
+    }
+    append(name, value) {
+      this.set(name, value);
+    }
+    has(name) {
+      return super.has(name.toLowerCase());
+    }
+    delete(name) {
+      return super.delete(name.toLowerCase());
+    }
+  };
+}
+
+if (typeof global.Response === "undefined") {
+  global.Response = class Response {
+    constructor(body, init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.statusText = init.statusText || "";
+      this.ok = this.status >= 200 && this.status < 300;
+      this.headers = new global.Headers(init.headers || {});
+    }
+    async text() {
+      return typeof this.body === "string"
+        ? this.body
+        : JSON.stringify(this.body);
+    }
+    async json() {
+      const text = await this.text();
+      return JSON.parse(text);
+    }
+  };
+}
+
+if (typeof global.Request === "undefined") {
+  global.Request = class Request {
+    constructor(input, init = {}) {
+      this.url = typeof input === "string" ? input : input.url;
+      this.method = init.method || "GET";
+      this.headers = new global.Headers(init.headers || {});
+      this.body = init.body;
+    }
+    clone() {
+      return new Request(this.url, {
+        method: this.method,
+        headers: this.headers,
+        body: this.body,
+      });
+    }
+  };
+}
 
 // ===========================
 // Mock Environment Variables
