@@ -1,5 +1,6 @@
+import { ticketsRouter } from "@/lib/features/tickets";
+
 import { router } from "../server";
-import { ticketsRouter } from "./tickets";
 
 /**
  * Главный tRPC роутер приложения

@@ -3,7 +3,7 @@
 import { formatDistanceToNow } from "date-fns";
 
 import { trpc } from "@/lib/trpc/client";
-import { SentimentLabel } from "@/lib/types/common";
+import { PRIORITY_SCORE, SentimentLabel } from "@/lib/types/common";
 
 interface ManagerSidebarProps {
   selectedTicketId: string | null;
@@ -22,9 +22,18 @@ export function ManagerSidebar({
     return (
       <div className="w-full lg:w-96 bg-white border-r border-gray-200 p-4">
         <div className="space-y-4">
-          <div className="h-16 bg-gray-100 rounded animate-pulse" />
-          <div className="h-16 bg-gray-100 rounded animate-pulse" />
-          <div className="h-16 bg-gray-100 rounded animate-pulse" />
+          <div
+            className="h-16 bg-gray-100 rounded animate-pulse"
+            data-testid="loading-skeleton"
+          />
+          <div
+            className="h-16 bg-gray-100 rounded animate-pulse"
+            data-testid="loading-skeleton"
+          />
+          <div
+            className="h-16 bg-gray-100 rounded animate-pulse"
+            data-testid="loading-skeleton"
+          />
         </div>
       </div>
     );
@@ -68,12 +77,14 @@ export function ManagerSidebar({
                 <div className="flex items-start gap-2">
                   <span
                     className={`mt-0.5 text-lg ${
-                      (ticket.priority_score ?? 0) >= 80 ? "animate-pulse" : ""
+                      (ticket.priority_score ?? 0) >= PRIORITY_SCORE.URGENT
+                        ? "animate-pulse"
+                        : ""
                     }`}
                   >
-                    {(ticket.priority_score ?? 0) >= 80
+                    {(ticket.priority_score ?? 0) >= PRIORITY_SCORE.URGENT
                       ? "🚨"
-                      : (ticket.priority_score ?? 0) >= 60
+                      : (ticket.priority_score ?? 0) >= PRIORITY_SCORE.MEDIUM
                         ? "🔴"
                         : "🟡"}
                   </span>

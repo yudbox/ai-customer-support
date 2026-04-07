@@ -56,6 +56,7 @@ export function Toast({
 
   return (
     <div
+      data-testid="toast-container"
       className={cn(
         "fixed top-8 right-8 max-w-md z-50 transition-all duration-300",
         isVisible
@@ -64,6 +65,7 @@ export function Toast({
       )}
     >
       <div
+        data-testid="toast-content"
         className={cn(
           "relative bg-gradient-to-r text-white rounded-lg shadow-2xl p-4 border overflow-hidden",
           config.gradient,
@@ -72,7 +74,10 @@ export function Toast({
       >
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <div
+              data-testid="toast-icon-container"
+              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+            >
               <span className="text-2xl">{config.icon}</span>
             </div>
           </div>
@@ -83,7 +88,11 @@ export function Toast({
                 {config.badge}
               </span>
             </div>
-            {description && <p className="text-sm opacity-90">{description}</p>}
+            {description && (
+              <p data-testid="toast-description" className="text-sm opacity-90">
+                {description}
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -91,6 +100,7 @@ export function Toast({
             aria-label="Close notification"
           >
             <svg
+              data-testid="toast-close-icon"
               className="w-5 h-5"
               fill="none"
               stroke="currentColor"
@@ -107,7 +117,10 @@ export function Toast({
         </div>
 
         {/* Progress bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 rounded-b-lg overflow-hidden">
+        <div
+          data-testid="toast-progress-bar"
+          className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 rounded-b-lg overflow-hidden"
+        >
           <div
             className="h-full bg-white/60"
             style={{

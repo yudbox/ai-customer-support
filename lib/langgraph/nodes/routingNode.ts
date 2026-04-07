@@ -11,7 +11,6 @@ import { WorkflowStep } from "@/lib/types/common";
 
 import { WorkflowState } from "../state/WorkflowState";
 
-
 // ===========================
 // TYPES
 // ===========================
@@ -40,7 +39,6 @@ export async function autoSelectTeam(
 ): Promise<TeamAssignment | null> {
   try {
     if (!category) {
-      console.warn("⚠️  No category provided for team assignment");
       return null;
     }
 
@@ -54,14 +52,8 @@ export async function autoSelectTeam(
     });
 
     if (!categoryData) {
-      console.warn(`❌ Category "${category}" not found in database`);
       return null;
     }
-
-    console.log(`📋 Category: ${categoryData.name}`);
-    console.log(`   → Assigned Team: ${categoryData.assigned_team}`);
-    console.log(`   → SLA: ${categoryData.sla_hours}h`);
-    console.log(`   → Priority Boost: +${categoryData.priority_boost}`);
 
     // Query team from database
     const team = await teamRepo.findOne({
@@ -69,9 +61,6 @@ export async function autoSelectTeam(
     });
 
     if (!team || team.members.length === 0) {
-      console.warn(
-        `❌ Team "${categoryData.assigned_team}" not found or has no members`,
-      );
       return null;
     }
 
@@ -79,16 +68,13 @@ export async function autoSelectTeam(
     const randomIndex = Math.floor(Math.random() * team.members.length);
     const selectedMember = team.members[randomIndex];
 
-    console.log(`✅ Assigned to team: ${team.name} → ${selectedMember}`);
-
     return {
       team: team.name,
       member: selectedMember,
       sla_hours: categoryData.sla_hours,
       priority_boost: categoryData.priority_boost,
     };
-  } catch (error) {
-    console.error("❌ Error in autoSelectTeam:", error);
+  } catch (_error) {
     return null;
   }
 }
@@ -108,23 +94,9 @@ export async function autoSelectTeam(
  * @returns Next node name: WAIT_APPROVAL or FINALIZE_TICKET
  */
 export function routePriority(state: typeof WorkflowState.State): string {
-  if (state.needs_approval) {
-    console.log(
-      "⏸️  Ticket requires manager approval (HIGH/CRITICAL priority)",
-    );
-    console.log("   → Routing to WAIT_APPROVAL node");
-    console.log("   → Workflow will PAUSE after this node");
-    console.log(
-      `   → Priority: ${state.priority?.level} (${state.priority?.score}/100)`,
-    );
-    return WorkflowStep.WAIT_APPROVAL;
-  }
+  const route = state.needs_approval
+    ? WorkflowStep.WAIT_APPROVAL
+    : WorkflowStep.FINALIZE_TICKET;
 
-  // All other cases: continue to finalization
-  console.log("✅ Ticket processing - checking for auto-resolution");
-  console.log(
-    `   → Priority: ${state.priority?.level} (${state.priority?.score}/100)`,
-  );
-  console.log("   → Continuing to FINALIZE_TICKET node");
-  return WorkflowStep.FINALIZE_TICKET;
+  return route;
 }

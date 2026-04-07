@@ -20,6 +20,8 @@ const customJestConfig = {
   },
   collectCoverageFrom: [
     "lib/langgraph/agentNodes/**/*.{ts,tsx}",
+    "lib/features/**/*.{ts,tsx}", // Feature-based architecture modules
+    "!lib/features/**/__tests__/**", // Exclude tests themselves
     "lib/trpc/**/*.{ts,tsx}",
     "lib/utils/**/*.{ts,tsx}",
     "components/**/*.{ts,tsx}",

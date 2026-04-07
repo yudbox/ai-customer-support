@@ -174,6 +174,23 @@ export const QUERY_PARAMS = {
   REJECTED: "rejected",
 } as const;
 
+/**
+ * Priority score thresholds (0-100 scale)
+ * Used to determine UI alerts, animations, and escalation rules
+ */
+export const PRIORITY_SCORE = {
+  /** Critical alert threshold (90+) - Highest priority with animations */
+  CRITICAL: 90,
+  /** Urgent alert threshold (80+) - Urgent attention needed with emoji alerts */
+  URGENT: 80,
+  /** High priority threshold (70+) - Needs manager escalation */
+  HIGH: 70,
+  /** Medium priority threshold (60+) - Standard escalation */
+  MEDIUM: 60,
+  /** Low priority threshold (40+) - Regular handling */
+  LOW: 40,
+} as const;
+
 // ===========================
 // UTILITY TYPES
 // ===========================

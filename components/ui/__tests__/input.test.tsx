@@ -2,8 +2,6 @@ import { createRef } from "react";
 
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
-
 import { Input } from "@/components/ui/input";
 
 describe("Input Component", () => {
@@ -74,10 +72,9 @@ describe("Input Component", () => {
     });
 
     it("renders without label when not provided", () => {
-      const { container } = render(<Input placeholder="No label" />);
-      const label = container.querySelector("label");
+      render(<Input placeholder="No label" />);
 
-      expect(label).not.toBeInTheDocument();
+      expect(screen.queryByRole("label")).not.toBeInTheDocument();
     });
   });
 
@@ -218,18 +215,20 @@ describe("Input Component", () => {
     });
 
     it("supports type='password'", () => {
-      render(<Input type="password" />);
-      const input = document.querySelector("input[type='password']");
+      render(<Input type="password" data-testid="password-input" />);
 
+      const input = screen.getByTestId("password-input");
       expect(input).toBeInTheDocument();
+      expect(input).toHaveAttribute("type", "password");
     });
 
     it("supports type='number'", () => {
-      render(<Input type="number" />);
-      // Note: type="number" doesn't have role="textbox"
-      const input = document.querySelector("input[type='number']");
+      render(<Input type="number" data-testid="number-input" />);
 
+      // Note: type="number" doesn't have role="textbox"
+      const input = screen.getByTestId("number-input");
       expect(input).toBeInTheDocument();
+      expect(input).toHaveAttribute("type", "number");
     });
 
     it("supports placeholder attribute", () => {

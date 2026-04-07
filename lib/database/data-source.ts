@@ -27,8 +27,23 @@ function getDatabaseConfig() {
   const password = process.env.POSTGRES_PASSWORD;
   const database = process.env.POSTGRES_DATABASE;
 
-  // Валидация: все переменные обязательны
+  // Валидация: все переменные обязательны (только в runtime, не в build time)
   if (!host || !port || !username || !password || !database) {
+    // В процессе build Next.js может импортировать этот модуль без подключения к БД
+    // Возвращаем дефолтные значения, которые не будут использоваться
+    if (process.env.NODE_ENV === "production" && !process.env.POSTGRES_HOST) {
+      console.warn(
+        "⚠️ Database env vars not set (build time) - using placeholder config",
+      );
+      return {
+        host: "placeholder",
+        port: 5432,
+        username: "placeholder",
+        password: "placeholder",
+        database: "placeholder",
+        ssl: false,
+      };
+    }
     throw new Error("Missing required database environment variables.");
   }
 
@@ -52,9 +67,6 @@ function getDatabaseConfig() {
   };
 }
 
-// Lazy initialization - create DataSource only when needed (not during import)
-let dataSource: DataSource | null = null;
-
 function createDataSource() {
   return new DataSource({
     type: "postgres",
@@ -77,17 +89,10 @@ function createDataSource() {
   });
 }
 
-// Export getter instead of instance
-export function getAppDataSource(): DataSource {
-  if (!dataSource) {
-    dataSource = createDataSource();
-  }
-  return dataSource;
-}
+// Export singleton DataSource instance
+export const AppDataSource = createDataSource();
 
-// Keep backward compatibility - но теперь создается лениво
-export const AppDataSource = new Proxy({} as DataSource, {
-  get(_, prop) {
-    return getAppDataSource()[prop as keyof DataSource];
-  },
-});
+// Helper for getting the instance (backward compatibility)
+export function getAppDataSource(): DataSource {
+  return AppDataSource;
+}

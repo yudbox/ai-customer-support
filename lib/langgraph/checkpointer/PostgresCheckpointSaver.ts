@@ -19,7 +19,6 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
   async getTuple(config: RunnableConfig): Promise<CheckpointTuple | undefined> {
     const threadId = config.configurable?.thread_id;
     if (!threadId) {
-      console.warn("[PostgresCheckpointer] No thread_id in config");
       return undefined;
     }
 
@@ -29,11 +28,8 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
     const record = await repo.findOne({ where: { thread_id: threadId } });
 
     if (!record) {
-      console.log(`[PostgresCheckpointer] No checkpoint found for ${threadId}`);
       return undefined;
     }
-
-    console.log(`[PostgresCheckpointer] Loaded checkpoint for ${threadId}`);
 
     return {
       config,
@@ -82,8 +78,6 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
       );
     }
 
-    console.log(`[PostgresCheckpointer] Saving checkpoint for ${threadId}`);
-
     const connection = await getDataSource();
     const repo = connection.getRepository(TicketWorkflowState);
 
@@ -94,8 +88,6 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
       checkpoint_data: checkpoint,
       metadata: metadata || {},
     });
-
-    console.log(`✅ [PostgresCheckpointer] Checkpoint saved for ${threadId}`);
 
     return config;
   }
@@ -111,22 +103,15 @@ export class PostgresCheckpointSaver extends BaseCheckpointSaver {
   ): Promise<void> {
     // Упрощенная версия - игнорируем writes
     // Они нужны только для сложных multi-step workflows
-    console.log(
-      `[PostgresCheckpointer] putWrites called (ignored for simple HITL)`,
-    );
   }
 
   /**
    * Удалить все checkpoints для thread
    */
   async deleteThread(threadId: string): Promise<void> {
-    console.log(`[PostgresCheckpointer] Deleting thread ${threadId}`);
-
     const connection = await getDataSource();
     const repo = connection.getRepository(TicketWorkflowState);
 
     await repo.delete({ thread_id: threadId });
-
-    console.log(`✅ [PostgresCheckpointer] Thread ${threadId} deleted`);
   }
 }

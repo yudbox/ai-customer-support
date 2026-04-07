@@ -13,29 +13,42 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      data-testid="modal-wrapper"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
       {/* Backdrop */}
       <div
+        data-testid="modal-backdrop"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 z-10">
+      <div
+        data-testid="modal-content"
+        className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 z-10"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div
+          data-testid="modal-header"
+          className="flex items-center justify-between mb-4"
+        >
           <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <button
+            data-testid="modal-close-button"
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg
+              data-testid="modal-close-svg"
               className="w-6 h-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
+                data-testid="modal-close-path"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}

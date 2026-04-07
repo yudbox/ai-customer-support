@@ -34,7 +34,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <div className="flex items-center justify-between mb-2">
+          <div
+            data-testid="textarea-label-row"
+            className="flex items-center justify-between mb-2"
+          >
             <label
               htmlFor={textareaId}
               className="block text-sm font-medium text-gray-700"
