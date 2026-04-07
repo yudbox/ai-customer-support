@@ -27,8 +27,23 @@ function getDatabaseConfig() {
   const password = process.env.POSTGRES_PASSWORD;
   const database = process.env.POSTGRES_DATABASE;
 
-  // Валидация: все переменные обязательны
+  // Валидация: все переменные обязательны (только в runtime, не в build time)
   if (!host || !port || !username || !password || !database) {
+    // В процессе build Next.js может импортировать этот модуль без подключения к БД
+    // Возвращаем дефолтные значения, которые не будут использоваться
+    if (process.env.NODE_ENV === "production" && !process.env.POSTGRES_HOST) {
+      console.warn(
+        "⚠️ Database env vars not set (build time) - using placeholder config",
+      );
+      return {
+        host: "placeholder",
+        port: 5432,
+        username: "placeholder",
+        password: "placeholder",
+        database: "placeholder",
+        ssl: false,
+      };
+    }
     throw new Error("Missing required database environment variables.");
   }
 
