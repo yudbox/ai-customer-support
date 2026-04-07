@@ -1,6 +1,5 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
 import { Button } from "@/components/ui/button";
 
 describe("Button Component", () => {
@@ -257,6 +256,245 @@ describe("Button Component", () => {
       expect(button).toHaveClass("bg-transparent");
       expect(button).toHaveClass("px-6");
       expect(button).toHaveClass("text-base");
+    });
+  });
+
+  describe("Pending State", () => {
+    it("renders spinner when isPending is true", () => {
+      render(<Button isPending>Loading</Button>);
+      const button = screen.getByRole("button");
+
+      // Spinner should be accessible with role="status"
+      const spinner = within(button).getByRole("status");
+      expect(spinner).toBeInTheDocument();
+      expect(spinner).toHaveClass("animate-spin");
+    });
+
+    it("hides children when isPending is true", () => {
+      render(<Button isPending>Click me</Button>);
+
+      // Text should not be visible
+      expect(screen.queryByText("Click me")).not.toBeInTheDocument();
+    });
+
+    it("shows children when isPending is false", () => {
+      render(<Button isPending={false}>Click me</Button>);
+
+      expect(screen.getByText("Click me")).toBeInTheDocument();
+    });
+
+    it("shows children when isPending is undefined (default)", () => {
+      render(<Button>Click me</Button>);
+
+      expect(screen.getByText("Click me")).toBeInTheDocument();
+    });
+
+    it("disables button when isPending is true", () => {
+      render(<Button isPending>Loading</Button>);
+      const button = screen.getByRole("button");
+
+      expect(button).toBeDisabled();
+    });
+
+    it("does not trigger onClick when isPending is true", () => {
+      const handleClick = jest.fn();
+      render(
+        <Button isPending onClick={handleClick}>
+          Loading
+        </Button>,
+      );
+      const button = screen.getByRole("button");
+
+      fireEvent.click(button);
+      expect(handleClick).not.toHaveBeenCalled();
+    });
+
+    it("renders spinner with correct classes", () => {
+      render(<Button isPending>Loading</Button>);
+      const button = screen.getByRole("button");
+      const spinner = within(button).getByRole("status");
+
+      expect(spinner).toHaveClass("animate-spin");
+      expect(spinner).toHaveClass("h-5");
+      expect(spinner).toHaveClass("w-5");
+    });
+
+    it("renders spinner as SVG element", () => {
+      render(<Button isPending>Loading</Button>);
+      const button = screen.getByRole("button");
+      const spinner = within(button).getByRole("status");
+
+      expect(spinner.tagName).toBe("svg");
+      expect(spinner).toHaveAttribute("fill", "none");
+      expect(spinner).toHaveAttribute("viewBox", "0 0 24 24");
+    });
+
+    it("spinner has aria-label for accessibility", () => {
+      render(<Button isPending>Loading</Button>);
+      const button = screen.getByRole("button");
+      const spinner = within(button).getByRole("status");
+
+      expect(spinner).toHaveAttribute("aria-label", "Loading");
+      expect(spinner).toHaveAttribute("role", "status");
+    });
+
+    it("can be both disabled and isPending", () => {
+      render(
+        <Button disabled isPending>
+          Loading
+        </Button>,
+      );
+      const button = screen.getByRole("button");
+
+      expect(button).toBeDisabled();
+      // Spinner should still show
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+    });
+
+    it("isPending=false allows button to be enabled", () => {
+      render(<Button isPending={false}>Click me</Button>);
+      const button = screen.getByRole("button");
+
+      expect(button).not.toBeDisabled();
+    });
+
+    it("works with different variants while pending", () => {
+      const { rerender } = render(
+        <Button variant="primary" isPending>
+          Loading
+        </Button>,
+      );
+      let button = screen.getByRole("button");
+      expect(button).toHaveClass("bg-blue-600");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+
+      rerender(
+        <Button variant="destructive" isPending>
+          Loading
+        </Button>,
+      );
+      button = screen.getByRole("button");
+      expect(button).toHaveClass("bg-red-600");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+
+      rerender(
+        <Button variant="secondary" isPending>
+          Loading
+        </Button>,
+      );
+      button = screen.getByRole("button");
+      expect(button).toHaveClass("bg-white");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+
+      rerender(
+        <Button variant="ghost" isPending>
+          Loading
+        </Button>,
+      );
+      button = screen.getByRole("button");
+      expect(button).toHaveClass("bg-transparent");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+    });
+
+    it("works with different sizes while pending", () => {
+      const { rerender } = render(
+        <Button size="sm" isPending>
+          Loading
+        </Button>,
+      );
+      let button = screen.getByRole("button");
+      expect(button).toHaveClass("text-sm");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+
+      rerender(
+        <Button size="md" isPending>
+          Loading
+        </Button>,
+      );
+      button = screen.getByRole("button");
+      expect(button).toHaveClass("text-base");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+
+      rerender(
+        <Button size="lg" isPending>
+          Loading
+        </Button>,
+      );
+      button = screen.getByRole("button");
+      expect(button).toHaveClass("text-lg");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+    });
+
+    it("transitions from pending to not pending", () => {
+      const { rerender } = render(<Button isPending>Loading</Button>);
+      let button = screen.getByRole("button");
+
+      expect(button).toBeDisabled();
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+      expect(screen.queryByText("Loading")).not.toBeInTheDocument();
+
+      rerender(<Button isPending={false}>Loading</Button>);
+      button = screen.getByRole("button");
+
+      expect(button).not.toBeDisabled();
+      expect(within(button).queryByRole("status")).not.toBeInTheDocument();
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
+
+    it("transitions from not pending to pending", () => {
+      const { rerender } = render(<Button isPending={false}>Submit</Button>);
+      let button = screen.getByRole("button");
+
+      expect(button).not.toBeDisabled();
+      expect(screen.getByText("Submit")).toBeInTheDocument();
+
+      rerender(<Button isPending>Submit</Button>);
+      button = screen.getByRole("button");
+
+      expect(button).toBeDisabled();
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+      expect(screen.queryByText("Submit")).not.toBeInTheDocument();
+    });
+
+    it("preserves custom className when pending", () => {
+      render(
+        <Button className="custom-pending-class" isPending>
+          Loading
+        </Button>,
+      );
+      const button = screen.getByRole("button");
+
+      expect(button).toHaveClass("custom-pending-class");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+    });
+
+    it("spinner inherits text color from button variant", () => {
+      const { rerender } = render(
+        <Button variant="primary" isPending>
+          Loading
+        </Button>,
+      );
+      let button = screen.getByRole("button");
+      expect(button).toHaveClass("text-white");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+
+      rerender(
+        <Button variant="destructive" isPending>
+          Loading
+        </Button>,
+      );
+      button = screen.getByRole("button");
+      expect(button).toHaveClass("text-white");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
+
+      rerender(
+        <Button variant="secondary" isPending>
+          Loading
+        </Button>,
+      );
+      button = screen.getByRole("button");
+      expect(button).toHaveClass("text-gray-700");
+      expect(within(button).getByRole("status")).toBeInTheDocument();
     });
   });
 });

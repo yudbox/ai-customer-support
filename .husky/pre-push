@@ -1,4 +1,38 @@
-echo "🧪 Running unit tests with coverage..."
-npm run test:coverage:unit || true
+#!/bin/sh
 
-echo "✅ Pre-push checks completed"
+echo "🚀 Running pre-push checks..."
+echo ""
+
+# Run unit tests with coverage (minimum 70% threshold)
+echo "🧪 Running unit tests with coverage (threshold: 70%)..."
+npm run test:coverage:unit
+UNIT_EXIT_CODE=$?
+
+if [ $UNIT_EXIT_CODE -ne 0 ]; then
+  echo ""
+  echo "❌ Unit tests failed or coverage < 70%"
+  echo "   Please fix failing tests or improve coverage before pushing."
+  exit 1
+fi
+
+echo ""
+echo "✅ Unit tests passed with sufficient coverage"
+echo ""
+
+# Run integration tests with coverage (minimum 70% threshold)
+echo "🔗 Running integration tests with coverage (threshold: 70%)..."
+npm run test:coverage:integration
+INT_EXIT_CODE=$?
+
+if [ $INT_EXIT_CODE -ne 0 ]; then
+  echo ""
+  echo "❌ Integration tests failed or coverage < 70%"
+  echo "   Please fix failing tests or improve coverage before pushing."
+  exit 1
+fi
+
+echo ""
+echo "✅ Integration tests passed with sufficient coverage"
+echo ""
+echo "🎉 All pre-push checks completed successfully!"
+echo "   Push allowed."

@@ -39,8 +39,6 @@ export function TicketStream({ ticketId, onReset }: TicketStreamProps) {
     );
   }
 
-  // console.log("111111111111111111111111 events", events);
-
   return (
     <div className="bg-white rounded-lg shadow-md h-[calc(100vh-8rem)] min-h-[600px] flex flex-col sticky top-8">
       {/* Fixed Header */}
@@ -83,7 +81,10 @@ export function TicketStream({ ticketId, onReset }: TicketStreamProps) {
                   </div>
                 ) : event.status === TicketStatus.IN_PROGRESS ? (
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div
+                      className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
+                      data-testid="loading-spinner"
+                    />
                   </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
@@ -215,7 +216,7 @@ export function TicketStream({ ticketId, onReset }: TicketStreamProps) {
                         <p className="font-medium">
                           Ticket ID: #{ticketId.slice(0, 8)}
                         </p>
-                        <p className="font-medium">Status: ⏳ In Progress</p>
+                        <p className="font-medium">Status: 🎫 Assigned</p>
                         <p className="font-medium">
                           Expected response: Within 2 hours
                         </p>

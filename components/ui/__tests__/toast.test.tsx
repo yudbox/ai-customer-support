@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
 import { Toast } from "@/components/ui/toast";
 
 describe("Toast Component", () => {
@@ -27,11 +26,10 @@ describe("Toast Component", () => {
     });
 
     it("renders without description when not provided", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
+      render(<Toast message="Test" isVisible={true} />);
 
       expect(screen.getByText("Test")).toBeInTheDocument();
-      const description = container.querySelector("p.text-sm.opacity-90");
-      expect(description).not.toBeInTheDocument();
+      expect(screen.queryByTestId("toast-description")).not.toBeInTheDocument();
     });
 
     it("renders close button", () => {
@@ -43,23 +41,21 @@ describe("Toast Component", () => {
     });
 
     it("renders progress bar", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const progressBar = container.querySelector(".absolute.bottom-0");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const progressBar = screen.getByTestId("toast-progress-bar");
       expect(progressBar).toBeInTheDocument();
       expect(progressBar).toHaveClass("h-1");
     });
 
     it("renders in DOM but is hidden with CSS when isVisible=false", () => {
-      const { container } = render(
-        <Toast message="Hidden" isVisible={false} />,
-      );
+      render(<Toast message="Hidden" isVisible={false} />);
 
       // Element is in DOM
       expect(screen.getByText("Hidden")).toBeInTheDocument();
 
       // But has hidden classes
-      const toastContainer = container.querySelector(".fixed");
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("opacity-0");
       expect(toastContainer).toHaveClass("-translate-y-full");
       expect(toastContainer).toHaveClass("pointer-events-none");
@@ -68,42 +64,39 @@ describe("Toast Component", () => {
 
   describe("Variants", () => {
     it("renders success variant with correct styling and badge", () => {
-      const { container } = render(
-        <Toast message="Success" variant="success" isVisible={true} />,
-      );
+      render(<Toast message="Success" variant="success" isVisible={true} />);
 
       expect(screen.getByText("Email & Slack")).toBeInTheDocument();
       expect(screen.getByText("📧")).toBeInTheDocument();
 
-      const gradientDiv = container.querySelector(".from-green-600");
-      expect(gradientDiv).toHaveClass("to-green-500");
-      expect(gradientDiv).toHaveClass("border-green-400");
+      const toastContent = screen.getByTestId("toast-content");
+      expect(toastContent).toHaveClass("from-green-600");
+      expect(toastContent).toHaveClass("to-green-500");
+      expect(toastContent).toHaveClass("border-green-400");
     });
 
     it("renders warning variant with correct styling and badge", () => {
-      const { container } = render(
-        <Toast message="Warning" variant="warning" isVisible={true} />,
-      );
+      render(<Toast message="Warning" variant="warning" isVisible={true} />);
 
       expect(screen.getByText("Priority Alert")).toBeInTheDocument();
       expect(screen.getByText("🚨")).toBeInTheDocument();
 
-      const gradientDiv = container.querySelector(".from-orange-600");
-      expect(gradientDiv).toHaveClass("to-orange-500");
-      expect(gradientDiv).toHaveClass("border-orange-400");
+      const toastContent = screen.getByTestId("toast-content");
+      expect(toastContent).toHaveClass("from-orange-600");
+      expect(toastContent).toHaveClass("to-orange-500");
+      expect(toastContent).toHaveClass("border-orange-400");
     });
 
     it("renders info variant with correct styling and badge", () => {
-      const { container } = render(
-        <Toast message="Info" variant="info" isVisible={true} />,
-      );
+      render(<Toast message="Info" variant="info" isVisible={true} />);
 
       expect(screen.getByText("Email")).toBeInTheDocument();
       expect(screen.getByText("📬")).toBeInTheDocument();
 
-      const gradientDiv = container.querySelector(".from-blue-600");
-      expect(gradientDiv).toHaveClass("to-blue-500");
-      expect(gradientDiv).toHaveClass("border-blue-400");
+      const toastContent = screen.getByTestId("toast-content");
+      expect(toastContent).toHaveClass("from-blue-600");
+      expect(toastContent).toHaveClass("to-blue-500");
+      expect(toastContent).toHaveClass("border-blue-400");
     });
 
     it("defaults to info variant when not specified", () => {
@@ -116,40 +109,40 @@ describe("Toast Component", () => {
 
   describe("Positioning and Styling", () => {
     it("has fixed positioning at top-right", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const toastContainer = container.querySelector(".fixed");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("fixed");
       expect(toastContainer).toHaveClass("top-8");
       expect(toastContainer).toHaveClass("right-8");
     });
 
     it("has correct z-index for overlay", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const toastContainer = container.querySelector(".fixed");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("z-50");
     });
 
     it("has max width constraint", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const toastContainer = container.querySelector(".fixed");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("max-w-md");
     });
 
     it("has gradient background", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const toastContent = container.querySelector(".bg-gradient-to-r");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const toastContent = screen.getByTestId("toast-content");
       expect(toastContent).toHaveClass("bg-gradient-to-r");
       expect(toastContent).toHaveClass("text-white");
     });
 
     it("has rounded corners and shadow", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const toastContent = container.querySelector(".rounded-lg");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const toastContent = screen.getByTestId("toast-content");
       expect(toastContent).toHaveClass("rounded-lg");
       expect(toastContent).toHaveClass("shadow-2xl");
     });
@@ -157,11 +150,9 @@ describe("Toast Component", () => {
 
   describe("Icon and Badge Rendering", () => {
     it("renders icon in circular background", () => {
-      const { container } = render(
-        <Toast message="Test" variant="success" isVisible={true} />,
-      );
-      const iconContainer = container.querySelector(".w-10.h-10");
+      render(<Toast message="Test" variant="success" isVisible={true} />);
 
+      const iconContainer = screen.getByTestId("toast-icon-container");
       expect(iconContainer).toBeInTheDocument();
       expect(iconContainer).toHaveClass("bg-white/20");
       expect(iconContainer).toHaveClass("rounded-full");
@@ -206,37 +197,35 @@ describe("Toast Component", () => {
 
   describe("Visibility Classes", () => {
     it("applies visible classes when isVisible=true", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const toastContainer = container.querySelector(".fixed");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("opacity-100");
       expect(toastContainer).toHaveClass("translate-y-0");
       expect(toastContainer).not.toHaveClass("pointer-events-none");
     });
 
     it("applies hidden classes when isVisible=false", () => {
-      const { container } = render(<Toast message="Test" isVisible={false} />);
-      const toastContainer = container.querySelector(".fixed");
+      render(<Toast message="Test" isVisible={false} />);
 
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("opacity-0");
       expect(toastContainer).toHaveClass("-translate-y-full");
       expect(toastContainer).toHaveClass("pointer-events-none");
     });
 
     it("has transition classes for smooth animation", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const toastContainer = container.querySelector(".fixed");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("transition-all");
       expect(toastContainer).toHaveClass("duration-300");
     });
 
     it("toggles visibility classes when isVisible changes", () => {
-      const { container, rerender } = render(
-        <Toast message="Test" isVisible={true} />,
-      );
-      const toastContainer = container.querySelector(".fixed");
+      const { rerender } = render(<Toast message="Test" isVisible={true} />);
 
+      const toastContainer = screen.getByTestId("toast-container");
       expect(toastContainer).toHaveClass("opacity-100");
 
       rerender(<Toast message="Test" isVisible={false} />);
@@ -273,10 +262,12 @@ describe("Toast Component", () => {
     });
 
     it("renders close button SVG icon", () => {
-      const { container } = render(<Toast message="Test" isVisible={true} />);
-      const svg = container.querySelector("svg.w-5.h-5");
+      render(<Toast message="Test" isVisible={true} />);
 
+      const svg = screen.getByTestId("toast-close-icon");
       expect(svg).toBeInTheDocument();
+      expect(svg).toHaveClass("w-5");
+      expect(svg).toHaveClass("h-5");
       expect(svg).toHaveAttribute("viewBox", "0 0 24 24");
     });
 

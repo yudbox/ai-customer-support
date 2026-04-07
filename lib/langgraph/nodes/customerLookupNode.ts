@@ -7,8 +7,6 @@ import type { WorkflowStateType } from "../state/WorkflowState";
 export async function customerLookupNode(
   state: WorkflowStateType,
 ): Promise<Partial<WorkflowStateType>> {
-  console.log("🔵 Agent 4: Customer Lookup Agent - Starting...");
-
   if (state.customer) {
     return { customer: state.customer };
   }
@@ -42,8 +40,6 @@ export async function customerLookupNode(
       customer: customerData,
     };
   } catch (error) {
-    console.error("❌ Agent 4: Customer lookup failed:", error);
-
     return {
       errors: [
         {

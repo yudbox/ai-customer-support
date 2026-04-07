@@ -52,9 +52,6 @@ function getDatabaseConfig() {
   };
 }
 
-// Lazy initialization - create DataSource only when needed (not during import)
-let dataSource: DataSource | null = null;
-
 function createDataSource() {
   return new DataSource({
     type: "postgres",
@@ -77,17 +74,10 @@ function createDataSource() {
   });
 }
 
-// Export getter instead of instance
-export function getAppDataSource(): DataSource {
-  if (!dataSource) {
-    dataSource = createDataSource();
-  }
-  return dataSource;
-}
+// Export singleton DataSource instance
+export const AppDataSource = createDataSource();
 
-// Keep backward compatibility - но теперь создается лениво
-export const AppDataSource = new Proxy({} as DataSource, {
-  get(_, prop) {
-    return getAppDataSource()[prop as keyof DataSource];
-  },
-});
+// Helper for getting the instance (backward compatibility)
+export function getAppDataSource(): DataSource {
+  return AppDataSource;
+}

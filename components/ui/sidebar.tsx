@@ -36,6 +36,7 @@ export function Sidebar({ isOpen, onClose, children }: SidebarProps) {
     <>
       {/* Overlay */}
       <div
+        data-testid="sidebar-overlay"
         className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}

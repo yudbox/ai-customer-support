@@ -34,10 +34,6 @@ export async function runWorkflow(
     ticket_id?: string;
   },
 ) {
-  console.log("\n" + "=".repeat(80));
-  console.log("🚀 STARTING WORKFLOW");
-  console.log("=".repeat(80) + "\n");
-
   const app = createWorkflow();
 
   const initialState = {
@@ -57,18 +53,8 @@ export async function runWorkflow(
 
     const result = await app.invoke(initialState, config);
 
-    console.log("\n" + "=".repeat(80));
-    console.log("✅ WORKFLOW COMPLETED");
-    console.log("=".repeat(80));
-    console.log("\nFinal State:");
-    console.log(JSON.stringify(result, null, 2));
-
     return result;
   } catch (error) {
-    console.error("\n" + "=".repeat(80));
-    console.error("❌ WORKFLOW FAILED");
-    console.error("=".repeat(80));
-    console.error(error);
     throw error;
   }
 }
@@ -97,9 +83,6 @@ export async function runWorkflowForTicketId(ticketId: string) {
 
   // 🔑 Use thread_id from ticket for checkpointer
   const threadId = ticket.thread_id;
-  console.log(
-    `[runWorkflowForTicketId] Starting workflow with thread_id: ${threadId}`,
-  );
 
   // ✅ Reuse runWorkflow with thread_id and ticket_id
   return await runWorkflow(input, {

@@ -217,14 +217,12 @@ export async function GET(request: NextRequest) {
             );
           }
         }
-      } catch (error) {
-        console.error("[stream/route] Stream error:", error);
       } finally {
         if (!isClosed) {
           isClosed = true;
           try {
             controller.close();
-          } catch (_error) {
+          } catch (_closeError) {
             // Controller already closed, ignore
           }
         }

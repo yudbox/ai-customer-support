@@ -89,8 +89,6 @@ export async function priorityNode(state: WorkflowStateType): Promise<{
   needs_approval: boolean;
   status: AgentExecutionStatus;
 }> {
-  console.log("🔵 Agent 6: Priority Agent - Starting...");
-
   const { customer, sentiment, classification, rag } = state;
 
   // ===========================
@@ -269,21 +267,8 @@ export async function priorityNode(state: WorkflowStateType): Promise<{
 
   const reasoningText = reasoning.join(", ");
 
-  console.log(
-    `✅ Agent 6: Priority calculated - ${level} ${emoji} (${score}/100)`,
-  );
-  console.log(`   - Reasoning: ${reasoningText}`);
-  console.log(`   - SLA: ${sla_minutes} minutes`);
-  console.log(
-    `   - Breakdown: Base(${BASE_SCORE}) + Tier(${tierBoost}) + Sentiment(${sentimentModifier}) + Category(${categoryUrgency}) + RAG(${ragModifier})`,
-  );
-
   // Check if human approval is needed
   const needsApproval = score >= THRESHOLD_HIGH; // Score >= 70 (HIGH or CRITICAL)
-
-  if (needsApproval) {
-    console.log("⚠️  HIGH/CRITICAL priority - requires manager approval");
-  }
 
   return {
     priority: {

@@ -6,23 +6,46 @@ AI-powered customer support system with intelligent ticket routing, sentiment an
 
 ## 🎯 Project Status
 
-**MVP Complete (90%+)** - Deployed to Vercel Production
+**MVP Complete (95%+)** - Deployed to Vercel Production
 
 ### ✅ Implemented Features
 
+#### Core AI Workflow
+
 - ✅ **6 AI Agents** (Intake, Classification, Sentiment, Customer Lookup, RAG, Priority)
 - ✅ **LangGraph Multi-Agent Orchestration** with PostgreSQL Checkpointer
-- ✅ **Human-in-the-Loop (HITL)** - Manager approval for HIGH/CRITICAL tickets
-- ✅ **Manager Dashboard** - Real-time approval system with SSE streaming
-- ✅ **Customer UI** - 6 demo scenarios with live workflow tracking
 - ✅ **Pinecone RAG** - 85 resolved tickets for similarity search
+- ✅ **Real-time SSE Streaming** - Live workflow progress updates
+
+#### Human-in-the-Loop (HITL) System
+
+- ✅ **Manager Dashboard** - Real-time pending tickets sidebar
+- ✅ **Approve/Reject Flow** - With resolution editing and team assignment
+- ✅ **AI Recommendations** - Pinecone similar tickets in detail panel
+- ✅ **Workflow Pause/Resume** - LangGraph checkpoint-based state persistence
+- ✅ **Toast Notifications** - User feedback for approval/rejection actions
+- ✅ **Query Param State** - URL-based navigation for approved/rejected tickets
+
+#### Customer Interface
+
+- ✅ **Ticket Submission Form** - 6 demo scenarios
+- ✅ **Real-time Progress Stream** - Live agent updates via SSE
+- ✅ **Toast Notifications** - Deployment status and ticket updates
+- ✅ **Responsive UI** - Mobile-first design with TailwindCSS
+
+#### Infrastructure & Quality
+
 - ✅ **tRPC API Layer** - Type-safe client-server communication
 - ✅ **PostgreSQL Database** - 9 tables (6 active, 3 reserved for Phase 5)
-- ✅ **Vercel Deployment** - Production-ready with Exit Code: 0
+- ✅ **Lazy DataSource Init** - Production-ready build configuration
+- ✅ **Pre-commit Hooks** - Type check + lint (Husky)
+- ✅ **Pre-push Hooks** - Coverage enforcement (70% minimum for unit & integration tests)
+- ✅ **GitHub Actions CI** - Automated quality checks + coverage validation on PRs
+- ✅ **Vercel Deployment** - Production-ready with zero-downtime updates
+- ✅ **Comprehensive Testing** - 1,900+ unit & integration tests with 70%+ coverage
 
 ### 🔄 In Progress (Phase 5)
 
-- 🔄 **Testing** (Priority #1) - Unit + Integration tests (target: 70%+ coverage)
 - ⏸️ **Analytics Dashboard** - KPIs, metrics, performance tracking
 - ⏸️ **Slack Integration** - Real-time notifications
 - ⏸️ **Admin Panel** - Configuration management
@@ -36,13 +59,41 @@ AI-powered customer support system with intelligent ticket routing, sentiment an
 
 ## Tech Stack
 
-- **Frontend:** Next.js 15 (App Router), React 19, TailwindCSS 4
-- **Backend:** tRPC, Server-Sent Events (SSE)
-- **Database:** PostgreSQL 16 (TypeORM)
-- **AI/ML:** LangGraph, OpenAI GPT-3.5, HuggingFace Sentiment Analysis
-- **Vector Database:** Pinecone (text-embedding-3-small, 1536 dimensions)
-- **Infrastructure:** Docker, Vercel
-- **Testing:** Jest, React Testing Library (in progress)
+### Frontend
+
+- **Next.js 16** (App Router, Turbopack)
+- **React 19** (Server Components, Suspense)
+- **TailwindCSS 4** (Utility-first CSS)
+- **tRPC** (Type-safe API client)
+- **React Hook Form + Zod** (Form validation)
+
+### Backend
+
+- **tRPC** (Type-safe API layer)
+- **Server-Sent Events (SSE)** (Real-time streaming)
+- **TypeORM** (PostgreSQL ORM with lazy initialization)
+
+### AI/ML
+
+- **LangGraph** (Multi-agent orchestration)
+- **OpenAI GPT-4o-mini** (Classification, embeddings)
+- **HuggingFace** (Sentiment analysis)
+- **Pinecone** (Vector database for RAG - 85 tickets)
+
+### Infrastructure
+
+- **PostgreSQL 16** (Primary database)
+- **Docker** (Local development)
+- **Vercel** (Production deployment)
+
+### DevOps & Quality
+
+- **Husky** (Git hooks: pre-commit, pre-push)
+- **GitHub Actions** (CI/CD pipeline)
+- **Jest + React Testing Library** (Unit/Integration tests)
+- **ESLint + TypeScript** (Code quality)
+
+---
 
 ## 🤖 Multi-Agent AI Workflow
 
@@ -118,11 +169,22 @@ await workflow.invoke(null, { configurable: { thread_id: threadId } });
 
 **Manager Dashboard Features:**
 
-- ✅ Real-time ticket queue with SSE streaming
-- ✅ Approve/Reject with notes
-- ✅ Edit suggested resolution before approval
-- ✅ View full AI analysis (sentiment, priority, RAG results)
-- ✅ PostgreSQL Checkpointer for state persistence
+- ✅ Real-time pending tickets sidebar with live updates
+- ✅ Full ticket detail panel with AI analysis
+  - Customer info (tier, lifetime value, sentiment history)
+  - AI priority score breakdown and reasoning
+  - Top 3 similar resolved tickets from Pinecone (clickable)
+  - Suggested resolution with confidence score
+- ✅ Approve/Reject workflow
+  - Edit resolution text before approval
+  - Select support team for assignment
+  - Auto-assign team member
+  - Reject with reason (creates manager notes)
+- ✅ URL state management with query params
+- ✅ Toast notifications for user actions
+- ✅ Responsive UI with mobile support
+- ✅ PostgreSQL Checkpointer for workflow state persistence
+- ✅ Automatic workflow resume after approval/rejection
 
 ### Workflow Architecture
 
@@ -310,21 +372,42 @@ npm run lint         # Run ESLint
 npm run type         # TypeScript type checking
 ```
 
-### Testing (Phase 5.1 - In Progress)
+### Testing
 
 ```bash
-npm test             # Run all tests (unit + integration)
-npm run test:unit    # Run unit tests only
-npm run test:int     # Run integration tests only
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Generate coverage report
+# Run all tests
+npm test                      # Run both unit + integration tests
+
+# Run specific test suites
+npm run test:unit             # Unit tests only (1,150+ tests)
+npm run test:int              # Integration tests only (750+ tests)
+
+# Coverage reports (70% minimum enforced)
+npm run test:coverage:unit    # Unit tests with coverage
+npm run test:coverage:integration # Integration tests with coverage
+npm run test:coverage         # Full coverage report (both suites)
+
+# Development
+npm run test:watch            # Run tests in watch mode
 ```
 
-**Test Configuration:**
+**Test Infrastructure:**
 
-- **Unit Tests:** `jest.config.js` - Tests for agent nodes, utils, components
-- **Integration Tests:** `jest.integration.config.js` - Tests for workflow, API routes
-- **Target Coverage:** 70%+ (statements, branches, functions, lines)
+- **Unit Tests:** `jest.config.js` - 1,150+ tests (97% coverage)
+  - Agent nodes, tRPC routers, repositories, services
+  - Uses `@testing-library/react` + `@testing-library/jest-dom`
+  - In-memory mocks (no database)
+
+- **Integration Tests:** `jest.integration.config.js` - 750+ tests (91% coverage)
+  - Full workflow, API routes, components
+  - Uses `pg-mem` (in-memory PostgreSQL)
+  - MSW for external API mocking (OpenAI, Pinecone, HuggingFace)
+
+- **Coverage Enforcement:** 70% minimum (statements, branches, functions, lines)
+  - Pre-push hook blocks push if coverage < 70%
+  - GitHub Actions CI blocks PR merge if coverage < 70%
+
+**Total:** 1,900+ tests | Unit: 97% | Integration: 91%
 
 ### Database
 
@@ -339,15 +422,89 @@ npm run seed:clear             # Clear all data + reseed
 
 ### Vector Database (Pinecone)
 
-````bash
+```bash
 # Migrate resolved tickets to Pinecone
 npx tsx scripts/seed-pinecone-tickets.ts
 
 # Output:
 # ✅ 85 tickets migrated to Pinecone
-# 9 Tables with UUID Primary Keys:**
+```
+
+---
+
+## 🔄 CI/CD Pipeline
+
+### Pre-commit Hooks (Husky)
+
+Runs automatically before each commit:
+
+```bash
+🔍 Type checking (tsc --noEmit)
+🧹 Linting (eslint)
+```
+
+**Fast commits** - No tests in pre-commit to keep commits quick.
+
+### Pre-push Hooks
+
+Runs before pushing to remote:
+
+```bash
+🧪 Unit tests with coverage (npm run test:coverage:unit)
+🧪 Integration tests with coverage (npm run test:coverage:integration)
+🚫 BLOCKS PUSH if coverage < 70% or tests fail
+```
+
+**Coverage enforcement:**
+
+- Unit test coverage must be ≥ 70%
+- Integration test coverage must be ≥ 70%
+- Clear error messages show which threshold failed
+- Current coverage: Unit 97% | Integration 91%
+
+### GitHub Actions CI
+
+Runs on pull requests and main branch pushes:
+
+```yaml
+Jobs: 1. Quality Checks
+  - Lint code
+  - Type checking
+  - Unit tests with coverage (70% minimum)
+  - Integration tests with coverage (70% minimum)
+  - 🚫 BLOCKS PR MERGE if any check fails
+
+  2. Build Check
+  - Production build
+  - Validates lazy DataSource init
+  - Mock env vars for build
+
+  3. Summary
+  - Overall status report
+  - Coverage statistics
+  - Mark PR as ready/blocked
+```
+
+**Configuration:** `.github/workflows/ci.yml`
+
+**Test Database:** Uses `pg-mem` (in-memory PostgreSQL) - no Docker/services needed in CI
+
+**Setup:**
+
+1. Enable GitHub Actions in repository settings
+2. (Optional) Add API keys to GitHub Secrets for E2E tests
+3. CI runs automatically on PRs with full coverage validation
+
+**Status:** ✅ Active - All checks passing (1,900+ tests, 70%+ coverage enforced)
+
+---
+
+## 🗄️ Database Schema
+
+### 9 Tables with UUID Primary Keys:\*\*
 
 ### Core Tables (6 - Active in MVP)
+
 - ✅ **customers** - Customer profiles (VIP/Regular/New tiers)
 - ✅ **tickets** - Support tickets with priority/sentiment/routing
 - ✅ **orders** - Purchase orders with JSONB items
@@ -356,6 +513,7 @@ npx tsx scripts/seed-pinecone-tickets.ts
 - ✅ **ticket_workflow_state** - LangGraph checkpointer (HITL state persistence)
 
 ### Reserved Tables (3 - Phase 5 Features)
+
 - ⏸️ **products** - Product catalog with specs (Phase 5.2: Product Q&A Agent)
 - ⏸️ **refunds** - Refund requests linked to tickets (Phase 5.4: Refund Automation)
 - ⏸️ **shipments** - Order tracking with event history (Phase 5.5: Shipment Tracking)
@@ -368,13 +526,60 @@ npx tsx scripts/seed-pinecone-tickets.ts
 - JSONB fields for flexible data (items, events, specs, compatibility)
 - **LangGraph Checkpointer** - ticket_workflow_state table for HITL persistence
 
-- **customers** - Customer profiles (VIP/Regular/New tiers)
-- **orders** - Purchase orders with JSONB items
-- **tickets** - Support tickets with priority/sentiment/routing
-- **shipments** - Order tracking with event history (JSONB)
-- **refunds** - Refund requests linked to tickets
-- **products** - Product catalog with specs (JSONB)
-- **categories** - Ticket categories for AI routing
+```yaml
+Jobs: 1. Quality Checks
+  - Lint code
+  - Type checking
+  - Unit tests
+
+  2. Build Check
+  - Production build
+  - Validates lazy DataSource init
+  - Mock env vars for build
+
+  3. Summary
+  - Overall status report
+  - Mark PR as ready/blocked
+```
+
+**Configuration:** `.github/workflows/ci.yml`
+
+**Setup:**
+
+1. Enable GitHub Actions in repository settings
+2. (Optional) Add API keys to GitHub Secrets for E2E tests
+3. CI runs automatically on PRs
+
+**Status:** ✅ Active - All checks passing
+
+---
+
+## 🗄️ Database Schema
+
+### 9 Tables with UUID Primary Keys:\*\*
+
+### Core Tables (6 - Active in MVP)
+
+- ✅ **customers** - Customer profiles (VIP/Regular/New tiers)
+- ✅ **tickets** - Support tickets with priority/sentiment/routing
+- ✅ **orders** - Purchase orders with JSONB items
+- ✅ **categories** - Ticket categories for AI routing
+- ✅ **teams** - Support teams with members
+- ✅ **ticket_workflow_state** - LangGraph checkpointer (HITL state persistence)
+
+### Reserved Tables (3 - Phase 5 Features)
+
+- ⏸️ **products** - Product catalog with specs (Phase 5.2: Product Q&A Agent)
+- ⏸️ **refunds** - Refund requests linked to tickets (Phase 5.4: Refund Automation)
+- ⏸️ **shipments** - Order tracking with event history (Phase 5.5: Shipment Tracking)
+
+**Key Features:**
+
+- Foreign Keys with CASCADE/SET NULL
+- Composite Index: `(status, priority_score)` on tickets
+- PostgreSQL ENUM types for status fields
+- JSONB fields for flexible data (items, events, specs, compatibility)
+- **LangGraph Checkpointer** - ticket_workflow_state table for HITL persistence
 - **teams** - Support teams with members
 
 **Key Features:**
@@ -406,7 +611,7 @@ FROM tickets t
 JOIN customers c ON t.customer_id = c.id
 LEFT JOIN orders o ON t.order_id = o.id
 LIMIT 10;
-````
+```
 
 ---
 

@@ -25,10 +25,7 @@ import type { WorkflowStateType } from "../state/WorkflowState";
  * @returns Empty object (no state changes)
  */
 export async function saveToDatabaseNode(state: WorkflowStateType) {
-  console.log("\n💾 Saving workflow results to database...");
-
   if (!state.ticket_id) {
-    console.warn("⚠️  No ticket_id in state, skipping database update");
     return {};
   }
 
@@ -73,16 +70,7 @@ export async function saveToDatabaseNode(state: WorkflowStateType) {
 
     // Update ticket in database
     await ticketRepo.update(state.ticket_id, updateData);
-
-    console.log(`✅ Ticket ${state.ticket_id} updated in database`);
-    console.log(`   Status: ${updateData.status}`);
-    if (updateData.priority) {
-      console.log(
-        `   Priority: ${updateData.priority} (${updateData.priority_score}/100)`,
-      );
-    }
-  } catch (error) {
-    console.error("❌ Failed to save to database:", error);
+  } catch (_error) {
     // Don't throw - let workflow complete even if DB update fails
   }
 

@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
 import { Modal } from "@/components/ui/modal";
 
 describe("Modal Component", () => {
@@ -59,47 +58,41 @@ describe("Modal Component", () => {
 
   describe("Structure and Styling", () => {
     it("renders with correct z-index layers", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const wrapper = container.querySelector(".fixed.inset-0.z-50");
-      const modalContent = container.querySelector(".relative.bg-white.z-10");
+      render(<Modal {...defaultProps} />);
 
+      const wrapper = screen.getByTestId("modal-wrapper");
+      const modalContent = screen.getByTestId("modal-content");
       expect(wrapper).toBeInTheDocument();
       expect(modalContent).toBeInTheDocument();
     });
 
     it("renders backdrop with blur effect", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const backdrop = container.querySelector(
-        ".absolute.inset-0.bg-black\\/40.backdrop-blur-sm",
-      );
+      render(<Modal {...defaultProps} />);
 
+      const backdrop = screen.getByTestId("modal-backdrop");
       expect(backdrop).toBeInTheDocument();
     });
 
     it("renders modal with correct positioning classes", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const wrapper = container.querySelector(
-        ".flex.items-center.justify-center",
-      );
+      render(<Modal {...defaultProps} />);
 
+      const wrapper = screen.getByTestId("modal-wrapper");
       expect(wrapper).toBeInTheDocument();
     });
 
     it("renders modal content with correct styles", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const modal = container.querySelector(".bg-white.rounded-lg.shadow-xl");
+      render(<Modal {...defaultProps} />);
 
+      const modal = screen.getByTestId("modal-content");
       expect(modal).toBeInTheDocument();
       expect(modal).toHaveClass("max-w-md");
       expect(modal).toHaveClass("p-6");
     });
 
     it("renders header with title and close button", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const header = container.querySelector(
-        ".flex.items-center.justify-between.mb-4",
-      );
+      render(<Modal {...defaultProps} />);
 
+      const header = screen.getByTestId("modal-header");
       expect(header).toBeInTheDocument();
       expect(screen.getByText("Test Modal")).toBeInTheDocument();
     });
@@ -117,10 +110,10 @@ describe("Modal Component", () => {
 
   describe("Close Button", () => {
     it("renders close button with X icon", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const closeButton = container.querySelector("button");
-      const svg = closeButton?.querySelector("svg");
+      render(<Modal {...defaultProps} />);
 
+      const closeButton = screen.getByTestId("modal-close-button");
+      const svg = screen.getByTestId("modal-close-svg");
       expect(closeButton).toBeInTheDocument();
       expect(svg).toBeInTheDocument();
       expect(svg).toHaveClass("w-6");
@@ -128,9 +121,9 @@ describe("Modal Component", () => {
     });
 
     it("close button has correct styles", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const closeButton = container.querySelector("button");
+      render(<Modal {...defaultProps} />);
 
+      const closeButton = screen.getByTestId("modal-close-button");
       expect(closeButton).toHaveClass("text-gray-400");
       expect(closeButton).toHaveClass("hover:text-gray-600");
       expect(closeButton).toHaveClass("transition-colors");
@@ -138,22 +131,18 @@ describe("Modal Component", () => {
 
     it("calls onClose when close button is clicked", () => {
       const handleClose = jest.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={handleClose} />,
-      );
-      const closeButton = container.querySelector("button");
+      render(<Modal {...defaultProps} onClose={handleClose} />);
 
-      if (closeButton) {
-        fireEvent.click(closeButton);
-      }
+      const closeButton = screen.getByTestId("modal-close-button");
+      fireEvent.click(closeButton);
 
       expect(handleClose).toHaveBeenCalledTimes(1);
     });
 
     it("renders SVG with correct path for X icon", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const path = container.querySelector("path");
+      render(<Modal {...defaultProps} />);
 
+      const path = screen.getByTestId("modal-close-path");
       expect(path).toBeInTheDocument();
       expect(path).toHaveAttribute("d", "M6 18L18 6M6 6l12 12");
     });
@@ -162,30 +151,20 @@ describe("Modal Component", () => {
   describe("Backdrop Interaction", () => {
     it("calls onClose when backdrop is clicked", () => {
       const handleClose = jest.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={handleClose} />,
-      );
-      const backdrop = container.querySelector(
-        ".absolute.inset-0.bg-black\\/40",
-      );
+      render(<Modal {...defaultProps} onClose={handleClose} />);
 
-      if (backdrop) {
-        fireEvent.click(backdrop);
-      }
+      const backdrop = screen.getByTestId("modal-backdrop");
+      fireEvent.click(backdrop);
 
       expect(handleClose).toHaveBeenCalledTimes(1);
     });
 
     it("does not close when clicking modal content", () => {
       const handleClose = jest.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={handleClose} />,
-      );
-      const modalContent = container.querySelector(".relative.bg-white");
+      render(<Modal {...defaultProps} onClose={handleClose} />);
 
-      if (modalContent) {
-        fireEvent.click(modalContent);
-      }
+      const modalContent = screen.getByTestId("modal-content");
+      fireEvent.click(modalContent);
 
       expect(handleClose).not.toHaveBeenCalled();
     });
@@ -207,43 +186,31 @@ describe("Modal Component", () => {
   describe("Multiple Close Methods", () => {
     it("can close via backdrop click", () => {
       const handleClose = jest.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={handleClose} />,
-      );
-      const backdrop = container.querySelector(".absolute.inset-0");
+      render(<Modal {...defaultProps} onClose={handleClose} />);
 
-      if (backdrop) {
-        fireEvent.click(backdrop);
-      }
+      const backdrop = screen.getByTestId("modal-backdrop");
+      fireEvent.click(backdrop);
 
       expect(handleClose).toHaveBeenCalledTimes(1);
     });
 
     it("can close via close button click", () => {
       const handleClose = jest.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={handleClose} />,
-      );
-      const closeButton = container.querySelector("button");
+      render(<Modal {...defaultProps} onClose={handleClose} />);
 
-      if (closeButton) {
-        fireEvent.click(closeButton);
-      }
+      const closeButton = screen.getByTestId("modal-close-button");
+      fireEvent.click(closeButton);
 
       expect(handleClose).toHaveBeenCalledTimes(1);
     });
 
     it("onClose is called only once per interaction", () => {
       const handleClose = jest.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={handleClose} />,
-      );
-      const backdrop = container.querySelector(".absolute.inset-0");
+      render(<Modal {...defaultProps} onClose={handleClose} />);
 
-      if (backdrop) {
-        fireEvent.click(backdrop);
-        fireEvent.click(backdrop);
-      }
+      const backdrop = screen.getByTestId("modal-backdrop");
+      fireEvent.click(backdrop);
+      fireEvent.click(backdrop);
 
       expect(handleClose).toHaveBeenCalledTimes(2);
     });
@@ -371,16 +338,12 @@ describe("Modal Component", () => {
 
     it("handles onClose being called multiple times quickly", () => {
       const handleClose = jest.fn();
-      const { container } = render(
-        <Modal {...defaultProps} onClose={handleClose} />,
-      );
-      const closeButton = container.querySelector("button");
+      render(<Modal {...defaultProps} onClose={handleClose} />);
 
-      if (closeButton) {
-        fireEvent.click(closeButton);
-        fireEvent.click(closeButton);
-        fireEvent.click(closeButton);
-      }
+      const closeButton = screen.getByTestId("modal-close-button");
+      fireEvent.click(closeButton);
+      fireEvent.click(closeButton);
+      fireEvent.click(closeButton);
 
       expect(handleClose).toHaveBeenCalledTimes(3);
     });
@@ -395,51 +358,49 @@ describe("Modal Component", () => {
     });
 
     it("close button is focusable", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const closeButton = container.querySelector("button");
+      render(<Modal {...defaultProps} />);
 
-      closeButton?.focus();
+      const closeButton = screen.getByTestId("modal-close-button");
+      closeButton.focus();
       expect(closeButton).toHaveFocus();
     });
 
     it("modal structure supports keyboard navigation", () => {
-      const { container } = render(
+      render(
         <Modal {...defaultProps}>
           <button>Action 1</button>
           <button>Action 2</button>
         </Modal>,
       );
 
-      const buttons = container.querySelectorAll("button");
+      const buttons = screen.getAllByRole("button");
       expect(buttons).toHaveLength(3); // 2 action buttons + 1 close button
     });
   });
 
   describe("Layout and Positioning", () => {
     it("centers modal in viewport", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const wrapper = container.querySelector(".fixed.inset-0");
+      render(<Modal {...defaultProps} />);
 
+      const wrapper = screen.getByTestId("modal-wrapper");
       expect(wrapper).toHaveClass("flex");
       expect(wrapper).toHaveClass("items-center");
       expect(wrapper).toHaveClass("justify-center");
     });
 
     it("modal has responsive width with max constraint", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const modal = container.querySelector(".bg-white.rounded-lg");
+      render(<Modal {...defaultProps} />);
 
+      const modal = screen.getByTestId("modal-content");
       expect(modal).toHaveClass("max-w-md");
       expect(modal).toHaveClass("w-full");
       expect(modal).toHaveClass("mx-4"); // Horizontal margin for mobile
     });
 
     it("backdrop covers entire viewport", () => {
-      const { container } = render(<Modal {...defaultProps} />);
-      const backdrop = container.querySelector(
-        ".absolute.inset-0.bg-black\\/40",
-      );
+      render(<Modal {...defaultProps} />);
 
+      const backdrop = screen.getByTestId("modal-backdrop");
       expect(backdrop).toHaveClass("absolute");
       expect(backdrop).toHaveClass("inset-0");
     });

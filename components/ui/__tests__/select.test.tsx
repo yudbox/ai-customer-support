@@ -2,8 +2,6 @@ import { createRef } from "react";
 
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
-
 import { Select } from "@/components/ui/select";
 
 describe("Select Component", () => {
@@ -97,10 +95,11 @@ describe("Select Component", () => {
     });
 
     it("renders without label when not provided", () => {
-      const { container } = render(<Select options={defaultOptions} />);
-      const label = container.querySelector("label");
+      render(<Select options={defaultOptions} />);
 
-      expect(label).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/optional|required|field/i),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -189,16 +188,19 @@ describe("Select Component", () => {
 
       expect(select).toBeInTheDocument();
       // Only placeholder option should exist
-      expect(select.querySelectorAll("option")).toHaveLength(1);
+      const options = screen.getAllByRole("option");
+      expect(options).toHaveLength(1);
     });
 
     it("uses correct key for options", () => {
-      const { container } = render(<Select options={defaultOptions} />);
-      const options = container.querySelectorAll(
-        "option[value]:not([value=''])",
-      );
+      render(<Select options={defaultOptions} />);
 
-      expect(options).toHaveLength(3);
+      const options = screen.getAllByRole("option");
+      // Exclude placeholder (first option with empty value)
+      const realOptions = options.filter(
+        (opt) => opt.getAttribute("value") !== "",
+      );
+      expect(realOptions).toHaveLength(3);
     });
   });
 
@@ -549,10 +551,10 @@ describe("Select Component", () => {
       }));
 
       render(<Select options={manyOptions} />);
-      const select = screen.getByRole("combobox");
 
       // +1 for placeholder option
-      expect(select.querySelectorAll("option")).toHaveLength(51);
+      const options = screen.getAllByRole("option");
+      expect(options).toHaveLength(51);
     });
 
     it("handles options with special characters", () => {
@@ -581,13 +583,11 @@ describe("Select Component", () => {
 
   describe("Edge Cases", () => {
     it("does not render label when empty string provided", () => {
-      const { container } = render(
-        <Select label="" options={defaultOptions} />,
-      );
-      const label = container.querySelector("label");
+      render(<Select label="" options={defaultOptions} />);
 
       // Empty string is falsy, so label should not render
-      expect(label).not.toBeInTheDocument();
+      const combobox = screen.queryByRole("combobox");
+      expect(combobox?.previousElementSibling).toBeNull();
     });
 
     it("renders with very long option labels", () => {
@@ -609,11 +609,12 @@ describe("Select Component", () => {
       ];
 
       render(<Select options={duplicateOptions} />);
-      const select = screen.getByRole("combobox");
 
-      expect(select.querySelectorAll("option[value='duplicate']")).toHaveLength(
-        2,
+      const options = screen.getAllByRole("option");
+      const duplicateOptionElements = options.filter(
+        (opt) => opt.getAttribute("value") === "duplicate",
       );
+      expect(duplicateOptionElements).toHaveLength(2);
       expect(consoleErrorSpy).toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();

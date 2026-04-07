@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
 import { SidebarToggle } from "@/components/ui/sidebar-toggle";
 
 describe("SidebarToggle Component", () => {
@@ -34,9 +33,9 @@ describe("SidebarToggle Component", () => {
     });
 
     it("renders SVG icon", () => {
-      const { container } = render(<SidebarToggle />);
-      const svg = container.querySelector("svg");
+      render(<SidebarToggle />);
 
+      const svg = screen.getByTestId("sidebar-toggle-icon");
       expect(svg).toBeInTheDocument();
       expect(svg).toHaveClass("w-5");
       expect(svg).toHaveClass("h-5");
@@ -169,17 +168,17 @@ describe("SidebarToggle Component", () => {
 
   describe("Icon Path", () => {
     it("renders chevron right icon for left side", () => {
-      const { container } = render(<SidebarToggle side="left" />);
-      const path = container.querySelector("path");
+      render(<SidebarToggle side="left" />);
 
+      const path = screen.getByTestId("sidebar-toggle-path");
       expect(path).toBeInTheDocument();
       expect(path).toHaveAttribute("d", "M9 5l7 7-7 7");
     });
 
     it("renders chevron left icon for right side", () => {
-      const { container } = render(<SidebarToggle side="right" />);
-      const path = container.querySelector("path");
+      render(<SidebarToggle side="right" />);
 
+      const path = screen.getByTestId("sidebar-toggle-path");
       expect(path).toBeInTheDocument();
       expect(path).toHaveAttribute("d", "M15 19l-7-7 7-7");
     });
@@ -345,7 +344,7 @@ describe("SidebarToggle Component", () => {
   describe("Complex Scenarios", () => {
     it("renders correctly with all props combined", () => {
       const handleClick = jest.fn();
-      const { container } = render(
+      render(
         <SidebarToggle
           side="right"
           mobileOnly={false}
@@ -363,7 +362,7 @@ describe("SidebarToggle Component", () => {
       fireEvent.click(button);
       expect(handleClick).toHaveBeenCalledTimes(1);
 
-      const path = container.querySelector("path");
+      const path = screen.getByTestId("sidebar-toggle-path");
       expect(path).toHaveAttribute("d", "M15 19l-7-7 7-7");
     });
 
@@ -430,30 +429,30 @@ describe("SidebarToggle Component", () => {
 
   describe("SVG Icon Details", () => {
     it("SVG has correct viewBox", () => {
-      const { container } = render(<SidebarToggle />);
-      const svg = container.querySelector("svg");
+      render(<SidebarToggle />);
 
+      const svg = screen.getByTestId("sidebar-toggle-icon");
       expect(svg).toHaveAttribute("viewBox", "0 0 24 24");
     });
 
     it("SVG has no fill (outlined icon)", () => {
-      const { container } = render(<SidebarToggle />);
-      const svg = container.querySelector("svg");
+      render(<SidebarToggle />);
 
+      const svg = screen.getByTestId("sidebar-toggle-icon");
       expect(svg).toHaveAttribute("fill", "none");
     });
 
     it("SVG uses currentColor for stroke", () => {
-      const { container } = render(<SidebarToggle />);
-      const svg = container.querySelector("svg");
+      render(<SidebarToggle />);
 
+      const svg = screen.getByTestId("sidebar-toggle-icon");
       expect(svg).toHaveAttribute("stroke", "currentColor");
     });
 
     it("SVG has correct xmlns", () => {
-      const { container } = render(<SidebarToggle />);
-      const svg = container.querySelector("svg");
+      render(<SidebarToggle />);
 
+      const svg = screen.getByTestId("sidebar-toggle-icon");
       expect(svg).toHaveAttribute("xmlns", "http://www.w3.org/2000/svg");
     });
   });

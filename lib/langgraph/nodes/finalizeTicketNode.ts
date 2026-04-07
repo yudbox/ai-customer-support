@@ -23,13 +23,8 @@ import type { WorkflowStateType } from "../state/WorkflowState";
  * @returns Status update (PENDING_APPROVAL or RESOLVED)
  */
 export async function finalizeTicketNode(state: WorkflowStateType) {
-  console.log("\n🏁 Finalizing ticket workflow...");
-
   // HIGH/CRITICAL - requires manager approval (first pass)
   if (state.needs_approval === true) {
-    console.log(
-      "   → Escalated to manager for approval (HIGH/CRITICAL priority)",
-    );
     return {
       status: TicketStatus.PENDING_APPROVAL,
     };
@@ -38,12 +33,6 @@ export async function finalizeTicketNode(state: WorkflowStateType) {
   // ✅ MANAGER APPROVED - after HITL resume (needs_approval set to false by manager)
   // If assigned_team is set, it means manager reviewed and approved
   if (state.needs_approval === false && state.assigned_team) {
-    console.log("   ✅ Manager approved - ticket resolved");
-    console.log(`   → Team: ${state.assigned_team}`);
-    if (state.resolution) {
-      console.log(`   → Resolution: ${state.resolution.substring(0, 60)}...`);
-    }
-
     return {
       status: TicketStatus.RESOLVED,
       resolution: state.resolution || state.rag?.suggested_solution || null,
@@ -51,7 +40,6 @@ export async function finalizeTicketNode(state: WorkflowStateType) {
   }
 
   // LOW/MEDIUM - check if we can auto-resolve
-  console.log("   → Attempting auto-resolution...");
 
   // Check if we have a high-confidence RAG solution
   const hasHighConfidenceSolution =
@@ -62,26 +50,20 @@ export async function finalizeTicketNode(state: WorkflowStateType) {
 
   if (hasHighConfidenceSolution) {
     // Full automation - AI can resolve this ticket
-    console.log("   ✅ Auto-resolved with RAG solution");
-    console.log(
-      `   → Similarity: ${(state.rag!.similar_tickets[0].similarity * 100).toFixed(0)}%`,
-    );
-    console.log(
-      `   → Solution: ${state.rag!.suggested_solution?.substring(0, 50)}...`,
-    );
-
     return {
       status: TicketStatus.RESOLVED,
       resolution: state.rag!.suggested_solution,
       assigned_team: null, // No human needed
     };
   } else {
-    // No confident solution - send to manager for review
-    console.log("   ⚠️  No high-confidence solution found");
-    console.log("   → Escalated to manager for manual review");
-
+    // No confident solution - assign to team for manual review
+    // This is LOW/MEDIUM priority, so it doesn't need manager approval
+    // Just assign to appropriate team based on classification
+    const assignedTeam = state.classification?.category || "general_support";
     return {
-      status: TicketStatus.PENDING_APPROVAL,
+      status: TicketStatus.OPEN, // Keep as OPEN, not PENDING_APPROVAL
+      assigned_team: assignedTeam,
+      resolution: null,
     };
   }
 }

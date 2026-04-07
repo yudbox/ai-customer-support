@@ -30,8 +30,6 @@ const SENTIMENT_EMOJI = {
 export async function sentimentNode(
   state: WorkflowStateType,
 ): Promise<Partial<WorkflowStateType>> {
-  console.log("🔵 Agent 3: Sentiment Agent - Starting...");
-
   const ticketText = `${state.input.subject}\n${state.input.body}`;
 
   // Validate required environment variable
@@ -62,10 +60,6 @@ export async function sentimentNode(
     const label = SENTIMENT_MAP[rawLabel] ?? SentimentLabel.NEUTRAL;
     const emoji = SENTIMENT_EMOJI[label];
 
-    console.log(
-      `✅ Agent 3: Sentiment detected - ${label} (${score.toFixed(2)})`,
-    );
-
     return {
       sentiment: {
         label,
@@ -73,9 +67,7 @@ export async function sentimentNode(
         emoji,
       },
     };
-  } catch (error) {
-    console.error("❌ Agent 3: Sentiment analysis failed:", error);
-
+  } catch (_error) {
     // Fallback на NEUTRAL при ошибке
     return {
       sentiment: {

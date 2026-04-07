@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
 import { Sidebar } from "@/components/ui/sidebar";
 
 describe("Sidebar Component", () => {
@@ -29,14 +28,14 @@ describe("Sidebar Component", () => {
 
     it("renders aside element", () => {
       render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = document.querySelector("aside");
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toBeInTheDocument();
     });
 
     it("renders overlay div", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0.bg-black\\/50");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toBeInTheDocument();
     });
@@ -64,51 +63,45 @@ describe("Sidebar Component", () => {
 
   describe("Open/Closed State", () => {
     it("shows sidebar when isOpen=true", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("translate-x-0");
       expect(aside).not.toHaveClass("-translate-x-full");
     });
 
     it("hides sidebar when isOpen=false", () => {
-      const { container } = render(
-        <Sidebar {...defaultProps} isOpen={false} />,
-      );
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={false} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("-translate-x-full");
       expect(aside).not.toHaveClass("translate-x-0");
     });
 
     it("shows overlay when isOpen=true", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveClass("opacity-100");
       expect(overlay).not.toHaveClass("pointer-events-none");
     });
 
     it("hides overlay when isOpen=false", () => {
-      const { container } = render(
-        <Sidebar {...defaultProps} isOpen={false} />,
-      );
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={false} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveClass("opacity-0");
       expect(overlay).toHaveClass("pointer-events-none");
     });
 
     it("toggles state when isOpen changes", () => {
-      const { container, rerender } = render(
-        <Sidebar {...defaultProps} isOpen={false} />,
-      );
-      let aside = container.querySelector("aside");
+      const { rerender } = render(<Sidebar {...defaultProps} isOpen={false} />);
+      let aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("-translate-x-full");
 
       rerender(<Sidebar {...defaultProps} isOpen={true} />);
-      aside = container.querySelector("aside");
+      aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("translate-x-0");
     });
@@ -116,10 +109,10 @@ describe("Sidebar Component", () => {
 
   describe("Overlay Interaction", () => {
     it("calls onClose when overlay is clicked", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
-      fireEvent.click(overlay!);
+      fireEvent.click(overlay);
 
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
@@ -134,19 +127,19 @@ describe("Sidebar Component", () => {
     });
 
     it("overlay click works multiple times", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
-      fireEvent.click(overlay!);
-      fireEvent.click(overlay!);
-      fireEvent.click(overlay!);
+      fireEvent.click(overlay);
+      fireEvent.click(overlay);
+      fireEvent.click(overlay);
 
       expect(mockOnClose).toHaveBeenCalledTimes(3);
     });
 
     it("overlay has aria-hidden attribute", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveAttribute("aria-hidden", "true");
     });
@@ -246,58 +239,58 @@ describe("Sidebar Component", () => {
 
   describe("Sidebar Styles", () => {
     it("has fixed positioning", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("fixed");
     });
 
     it("is positioned at top-left", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("top-0");
       expect(aside).toHaveClass("left-0");
     });
 
     it("has full height", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("h-full");
     });
 
     it("has correct width", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("w-64");
     });
 
     it("has white background", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("bg-white");
     });
 
     it("has shadow", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("shadow-xl");
     });
 
     it("has correct z-index", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("z-50");
     });
 
     it("has transition classes", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = container.querySelector("aside");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toHaveClass("transform");
       expect(aside).toHaveClass("transition-transform");
@@ -308,30 +301,30 @@ describe("Sidebar Component", () => {
 
   describe("Overlay Styles", () => {
     it("overlay has fixed positioning covering full screen", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveClass("fixed");
       expect(overlay).toHaveClass("inset-0");
     });
 
     it("overlay has backdrop color", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveClass("bg-black/50");
     });
 
     it("overlay has correct z-index (below sidebar)", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveClass("z-40");
     });
 
     it("overlay has transition classes", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveClass("transition-opacity");
       expect(overlay).toHaveClass("duration-300");
@@ -417,11 +410,11 @@ describe("Sidebar Component", () => {
     });
 
     it("handles onClose being called multiple times", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       for (let i = 0; i < 10; i++) {
-        fireEvent.click(overlay!);
+        fireEvent.click(overlay);
       }
 
       expect(mockOnClose).toHaveBeenCalledTimes(10);
@@ -434,7 +427,7 @@ describe("Sidebar Component", () => {
         </Sidebar>,
       );
 
-      const aside = document.querySelector("aside");
+      const aside = screen.getByRole("complementary");
       expect(aside).toBeInTheDocument();
     });
 
@@ -530,14 +523,12 @@ describe("Sidebar Component", () => {
 
   describe("Complex Scenarios", () => {
     it("opens, closes via overlay, and reopens", () => {
-      const { container, rerender } = render(
-        <Sidebar {...defaultProps} isOpen={true} />,
-      );
+      const { rerender } = render(<Sidebar {...defaultProps} isOpen={true} />);
 
       expect(document.body.style.overflow).toBe("hidden");
 
-      const overlay = container.querySelector(".fixed.inset-0");
-      fireEvent.click(overlay!);
+      const overlay = screen.getByTestId("sidebar-overlay");
+      fireEvent.click(overlay);
       expect(mockOnClose).toHaveBeenCalledTimes(1);
 
       rerender(<Sidebar {...defaultProps} isOpen={false} />);
@@ -610,15 +601,15 @@ describe("Sidebar Component", () => {
   describe("Accessibility", () => {
     it("sidebar uses semantic aside element", () => {
       render(<Sidebar {...defaultProps} isOpen={true} />);
-      const aside = document.querySelector("aside");
+      const aside = screen.getByRole("complementary");
 
       expect(aside).toBeInTheDocument();
-      expect(aside?.tagName).toBe("ASIDE");
+      expect(aside.tagName).toBe("ASIDE");
     });
 
     it("overlay has aria-hidden to hide from screen readers", () => {
-      const { container } = render(<Sidebar {...defaultProps} isOpen={true} />);
-      const overlay = container.querySelector(".fixed.inset-0");
+      render(<Sidebar {...defaultProps} isOpen={true} />);
+      const overlay = screen.getByTestId("sidebar-overlay");
 
       expect(overlay).toHaveAttribute("aria-hidden", "true");
     });

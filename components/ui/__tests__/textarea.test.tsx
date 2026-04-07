@@ -3,8 +3,6 @@ import { createRef } from "react";
 
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import "@testing-library/jest-dom";
-
 import { Textarea } from "@/components/ui/textarea";
 
 describe("Textarea Component", () => {
@@ -285,7 +283,7 @@ describe("Textarea Component", () => {
     });
 
     it("counter is positioned in label row", () => {
-      const { container } = render(
+      render(
         <Textarea
           label="Bio"
           showCharCount
@@ -293,10 +291,8 @@ describe("Textarea Component", () => {
           currentLength={50}
         />,
       );
-      const labelRow = container.querySelector(
-        ".flex.items-center.justify-between",
-      );
 
+      const labelRow = screen.getByTestId("textarea-label-row");
       expect(labelRow).toBeInTheDocument();
       expect(labelRow).toContainElement(screen.getByText("Bio"));
       expect(labelRow).toContainElement(screen.getByText("50/100"));

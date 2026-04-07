@@ -5,12 +5,14 @@ import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 
+import { API_BASE_PATHS } from "@/lib/config/api-routes";
+
 import { trpc } from "./client";
 
 /**
  * TRPCProvider
- * Оборачивает приложение для использования tRPC клиента
- * Настраивает React Query и tRPC клиент
+ * Wraps the application for using tRPC client
+ * Configures React Query and tRPC client
  */
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -18,9 +20,9 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Отключаем автоматический refetch (можно включить позже)
+            // Disable automatic refetch (can be enabled later)
             refetchOnWindowFocus: false,
-            staleTime: 60 * 1000, // 1 минута
+            staleTime: 60 * 1000, // 1 minute
           },
         },
       }),
@@ -30,7 +32,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: "/api/trpc",
+          url: API_BASE_PATHS.TRPC,
         }),
       ],
     }),

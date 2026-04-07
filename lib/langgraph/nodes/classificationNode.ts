@@ -11,8 +11,6 @@ import type { WorkflowStateType } from "../state/WorkflowState";
 export async function classificationNode(
   state: WorkflowStateType,
 ): Promise<Partial<WorkflowStateType>> {
-  console.log("🔵 Agent 2: Classification Agent - Starting...");
-
   try {
     const prompt = `You are a support ticket classifier.\nGiven the subject and body of a customer support ticket, classify it into one of the following categories and subcategories:\n\nCategories:\n- Account Issues: Cannot Login, Email Change Request, Password Reset\n- Payment Problems: Card Declined, Double Charge, Payment Failed, Billing Issue\n- Product Quality: Missing Parts, Product Damaged on Arrival, Defective Product\n- Refund Requests: Changed Mind, Defective Product Return, Order Cancellation\n- Shipping Delays: Package Lost, Wrong Address, Delayed Delivery, Not Received\n- Technical Issues: App Not Loading, Feature Not Working, Checkout Issue, Website Bug\n\nReturn a JSON object:\n{\n  \"category\": \"...\",\n  \"subcategory\": \"...\",\n  \"confidence\": 0.0-1.0\n}\n\nSubject: ${state.input.subject}\nBody: ${state.input.body}`;
 
@@ -45,14 +43,13 @@ export async function classificationNode(
 
     return {
       classification: {
-        category: parsed.category,
-        subcategory: parsed.subcategory,
+        category: parsed.category || null,
+        subcategory: parsed.subcategory || null,
         confidence: parsed.confidence ?? null,
       },
       status: TicketStatus.IN_PROGRESS,
     };
   } catch (error) {
-    console.error("❌ Agent 2: Classification Agent - Error:", error);
     return {
       errors: [
         {
