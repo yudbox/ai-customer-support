@@ -519,21 +519,25 @@ npm run test:a11y:report   # Generate coverage report + open in browser
 All components meet the following Level AA success criteria:
 
 **Perceivable:**
+
 - ✅ **1.3.1 Info and Relationships** - Semantic HTML (form, nav, aside, role="dialog")
 - ✅ **1.4.3 Contrast (Minimum)** - 4.5:1 for normal text, 3:1 for large text
 
 **Operable:**
+
 - ✅ **2.1.1 Keyboard** - All functionality available via keyboard
 - ✅ **2.4.3 Focus Order** - Logical tab sequence
 - ✅ **2.4.7 Focus Visible** - Clear focus indicators on all interactive elements
 
 **Understandable:**
+
 - ✅ **3.2.1 On Focus** - No context change on focus
 - ✅ **3.2.2 On Input** - Predictable behavior for form inputs
 - ✅ **3.3.1 Error Identification** - Clear error messages with ARIA invalid
 - ✅ **3.3.2 Labels or Instructions** - All inputs have associated labels
 
 **Robust:**
+
 - ✅ **4.1.2 Name, Role, Value** - Proper ARIA attributes on all components
 - ✅ **4.1.3 Status Messages** - ARIA live regions for dynamic content
 
@@ -555,6 +559,7 @@ All critical flows support keyboard-only navigation:
 ### CI/CD Integration
 
 Accessibility tests run on:
+
 - ✅ **Pre-push hook** - Blocks push if any test fails
 - ✅ **GitHub Actions** - Blocks PR merge if compliance breaks
 - ✅ **Every commit** - Ensures continuous accessibility compliance
