@@ -34,11 +34,15 @@ export function Header() {
           </div>
 
           {/* Desktop Navigation - hidden on mobile */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav
+            className="hidden md:flex items-center gap-6"
+            aria-label="Main navigation"
+          >
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={pathname === link.href ? "page" : undefined}
                 className={`font-medium transition-colors border-b-2 pb-1 ${
                   pathname === link.href
                     ? "text-blue-600 border-blue-600"
@@ -110,12 +114,13 @@ export function Header() {
         </div>
 
         {/* Sidebar Navigation */}
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2" aria-label="Mobile navigation">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setIsMobileMenuOpen(false)}
+              aria-current={pathname === link.href ? "page" : undefined}
               className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
                 pathname === link.href
                   ? "bg-blue-50 text-blue-600"

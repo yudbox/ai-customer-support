@@ -87,7 +87,11 @@ export function TicketForm({ onSubmitSuccess }: TicketFormProps) {
           Submit a Support Ticket
         </h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-6"
+          aria-label="Support ticket submission form"
+        >
           {/* Email */}
           <Input
             type="email"
@@ -135,7 +139,11 @@ export function TicketForm({ onSubmitSuccess }: TicketFormProps) {
 
           {/* Error Message */}
           {createTicketMutation.error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div
+              className="p-4 bg-red-50 border border-red-200 rounded-lg"
+              role="alert"
+              aria-live="assertive"
+            >
               <p className="text-red-800 text-sm font-medium">
                 {createTicketMutation.error.message}
               </p>

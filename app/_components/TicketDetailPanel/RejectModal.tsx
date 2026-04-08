@@ -31,8 +31,10 @@ export function RejectModal({
           placeholder="Enter rejection reason..."
           value={rejectReason}
           onChange={(e) => onReasonChange(e.target.value)}
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- WCAG 2.1.1: Modal dialogs must move focus inside on open
           autoFocus
           className="focus:ring-red-500"
+          aria-label="Rejection reason"
         />
 
         <div className="flex gap-3 justify-end pt-2">

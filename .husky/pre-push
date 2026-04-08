@@ -19,6 +19,22 @@ echo ""
 echo "✅ Unit tests passed with sufficient coverage"
 echo ""
 
+# Run accessibility tests (WCAG 2.1 AA compliance check)
+echo "♿ Running accessibility tests (WCAG 2.1 AA)..."
+npm run test:a11y:check
+A11Y_EXIT_CODE=$?
+
+if [ $A11Y_EXIT_CODE -ne 0 ]; then
+  echo ""
+  echo "❌ Accessibility tests failed"
+  echo "   Please fix accessibility violations before pushing."
+  exit 1
+fi
+
+echo ""
+echo "✅ Accessibility tests passed"
+echo ""
+
 # Run integration tests with coverage (minimum 70% threshold)
 echo "🔗 Running integration tests with coverage (threshold: 70%)..."
 npm run test:coverage:integration

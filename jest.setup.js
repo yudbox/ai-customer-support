@@ -4,11 +4,18 @@
  *
  * Purpose:
  * - Add @testing-library/jest-dom matchers
+ * - Add jest-axe accessibility matchers (EU Directive 2019/882 compliance)
  * - Polyfills for Web APIs (ReadableStream for SSE)
  * - Mock environment variables
  */
 
 import "@testing-library/jest-dom";
+import { ReadableStream } from "stream/web";
+
+import { toHaveNoViolations } from "jest-axe";
+
+// Add jest-axe matchers for accessibility testing
+expect.extend(toHaveNoViolations);
 
 // ===========================
 // Polyfills for Node.js
@@ -16,7 +23,6 @@ import "@testing-library/jest-dom";
 
 // ReadableStream for SSE (Server-Sent Events) testing
 // Required for /api/tickets/stream route tests
-import { ReadableStream } from "stream/web";
 global.ReadableStream = ReadableStream;
 
 // Response, Request, Headers polyfills for JSDOM test environment
