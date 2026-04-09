@@ -40,6 +40,14 @@ export function SimilarTickets({
               <div
                 key={idx}
                 onClick={() => onSelectTicket(idx, similar.resolution)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectTicket(idx, similar.resolution);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
                 className={`border-l-4 p-4 rounded cursor-pointer transition-colors ${
                   isSelected
                     ? "border-green-500 bg-green-50 hover:bg-green-100"

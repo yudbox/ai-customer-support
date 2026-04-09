@@ -11,6 +11,27 @@ const eslintConfig = defineConfig([
       "unused-imports": unusedImports,
     },
     rules: {
+      // Accessibility rules (EU Directive 2019/882 compliance)
+      // jsx-a11y plugin already included in nextVitals config
+      "jsx-a11y/alt-text": "error", // Images must have alt text
+      "jsx-a11y/aria-props": "error", // ARIA properties must be valid
+      "jsx-a11y/aria-proptypes": "error", // ARIA property types must be valid
+      "jsx-a11y/aria-unsupported-elements": "error", // ARIA used on supported elements only
+      "jsx-a11y/role-has-required-aria-props": "error", // Roles have required ARIA props
+      "jsx-a11y/role-supports-aria-props": "error", // ARIA props supported by role
+      "jsx-a11y/label-has-associated-control": "error", // Labels associated with controls
+      "jsx-a11y/no-noninteractive-element-interactions": "warn", // Interactive handlers on semantic elements
+      "jsx-a11y/click-events-have-key-events": "warn", // Click handlers need keyboard events
+      "jsx-a11y/no-static-element-interactions": "warn", // Interactive elements need semantic role
+      "jsx-a11y/anchor-is-valid": "error", // Anchors must have valid href
+      "jsx-a11y/heading-has-content": "error", // Headings must have content
+      "jsx-a11y/html-has-lang": "error", // HTML must have lang attribute
+      "jsx-a11y/iframe-has-title": "error", // Iframes must have title
+      "jsx-a11y/img-redundant-alt": "warn", // Alt text shouldn't contain "image"
+      "jsx-a11y/interactive-supports-focus": "error", // Interactive elements must be focusable
+      "jsx-a11y/no-autofocus": "warn", // Avoid autofocus
+      "jsx-a11y/no-redundant-roles": "error", // Don't use redundant roles
+
       // Error on unused imports
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": [
