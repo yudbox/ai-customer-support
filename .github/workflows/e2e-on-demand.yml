@@ -92,6 +92,12 @@ jobs:
           destination_dir: reports/${{ github.run_number }}
           keep_files: true
 
+      - name: Print Report URL
+        if: always()
+        run: |
+          echo "📊 E2E Test Report URL:"
+          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/${{ github.run_number }}"
+
       - name: Comment Report URL
         if: always()
         uses: actions/github-script@v7
