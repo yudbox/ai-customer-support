@@ -92,23 +92,23 @@ jobs:
           destination_dir: reports/${{ github.run_number }}
           keep_files: true
 
-      # - name: Comment Report URL
-      #   if: always()
-      #   uses: actions/github-script@v7
-      #   with:
-      #     script: |
-      #       const runNumber = context.runNumber;
-      #       const repo = context.repo.owner;
-      #       const repoName = context.repo.repo;
-      #       const reportUrl = `https://${repo}.github.io/${repoName}/reports/${runNumber}`;
+      - name: Comment Report URL
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runNumber = context.runNumber;
+            const repo = context.repo.owner;
+            const repoName = context.repo.repo;
+            const reportUrl = `https://${repo}.github.io/${repoName}/reports/${runNumber}`;
 
-      #       core.summary
-      #         .addHeading('🎭 Playwright E2E Test Results')
-      #         .addRaw(`**Environment:** ${{ inputs.environment }}`)
-      #         .addRaw(`\n**Test Suite:** ${{ inputs.test_suite }}`)
-      #         .addRaw(`\n**Base URL:** ${{ steps.base-url.outputs.url }}`)
-      #         .addRaw(`\n\n📊 [View Full Report](${reportUrl})`)
-      #         .write();
+            core.summary
+              .addHeading('🎭 Playwright E2E Test Results')
+              .addRaw(`**Environment:** ${{ inputs.environment }}`)
+              .addRaw(`\n**Test Suite:** ${{ inputs.test_suite }}`)
+              .addRaw(`\n**Base URL:** ${{ steps.base-url.outputs.url }}`)
+              .addRaw(`\n\n📊 [View Full Report](${reportUrl})`)
+              .write();
 
       # - name: Send Slack Notification
       #   if: always() && vars.SLACK_WEBHOOK_URL != ''
