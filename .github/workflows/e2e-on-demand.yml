@@ -116,65 +116,65 @@ jobs:
               .addRaw(`\n\n📊 [View Full Report](${reportUrl})`)
               .write();
 
-      # - name: Send Slack Notification
-      #   if: always() && vars.SLACK_WEBHOOK_URL != ''
-      #   uses: slackapi/slack-github-action@v1.26.0
-      #   with:
-      #     payload: |
-      #       {
-      #         "text": "E2E Tests Completed",
-      #         "blocks": [
-      #           {
-      #             "type": "header",
-      #             "text": {
-      #               "type": "plain_text",
-      #               "text": "${{ job.status == 'success' && '✅' || '❌' }} E2E Tests - ${{ inputs.environment }}"
-      #             }
-      #           },
-      #           {
-      #             "type": "section",
-      #             "fields": [
-      #               {
-      #                 "type": "mrkdwn",
-      #                 "text": "*Environment:*\n${{ inputs.environment }}"
-      #               },
-      #               {
-      #                 "type": "mrkdwn",
-      #                 "text": "*Suite:*\n${{ inputs.test_suite }}"
-      #               },
-      #               {
-      #                 "type": "mrkdwn",
-      #                 "text": "*Status:*\n${{ job.status }}"
-      #               },
-      #               {
-      #                 "type": "mrkdwn",
-      #                 "text": "*Triggered by:*\n${{ github.actor }}"
-      #               }
-      #             ]
-      #           },
-      #           {
-      #             "type": "actions",
-      #             "elements": [
-      #               {
-      #                 "type": "button",
-      #                 "text": {
-      #                   "type": "plain_text",
-      #                   "text": "View Report"
-      #                 },
-      #                 "url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/${{ github.run_number }}"
-      #               },
-      #               {
-      #                 "type": "button",
-      #                 "text": {
-      #                   "type": "plain_text",
-      #                   "text": "View Workflow"
-      #                 },
-      #                 "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      #               }
-      #             ]
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}
-      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      - name: Send Slack Notification
+        if: always() && vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "E2E Tests Completed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ job.status == 'success' && '✅' || '❌' }} E2E Tests - ${{ inputs.environment }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\n${{ inputs.environment }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Suite:*\n${{ inputs.test_suite }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n${{ job.status }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.actor }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Report"
+                      },
+                      "url": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/${{ github.run_number }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
