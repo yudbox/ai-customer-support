@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { config } from "dotenv";
+
+// Load environment variables from .env.local
+config({ path: ".env.local" });
 
 /**
  * Playwright E2E Test Configuration
@@ -33,6 +37,14 @@ export default defineConfig({
 
     /* Screenshot on failure */
     screenshot: "only-on-failure",
+
+    /* Add Vercel Protection Bypass header if token is provided */
+    extraHTTPHeaders: process.env.VERCEL_PROTECTION_BYPASS
+      ? {
+          "x-vercel-protection-bypass":
+            process.env.VERCEL_PROTECTION_BYPASS,
+        }
+      : {},
   },
 
   /* Configure projects for major browsers */
