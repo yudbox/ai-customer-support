@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -81,14 +81,14 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      # - name: Deploy Report to GitHub Pages
-      #   if: always()
-      #   uses: peaceiris/actions-gh-pages@v3
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: ./playwright-report
-      #     destination_dir: reports/${{ github.run_number }}
-      #     keep_files: true
+      - name: Deploy Report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./playwright-report
+          destination_dir: reports/${{ github.run_number }}
+          keep_files: true
 
       # - name: Comment Report URL
       #   if: always()
