@@ -31,22 +31,21 @@ test.describe("Customer UI - Smoke Tests", () => {
     // Navigate to home page
     await page.goto("/");
 
-    // Select demo scenario from dropdown
-    await page.selectOption('[data-testid="scenario-dropdown"]', {
-      label: "😊 Обычный вопрос - о продукте",
-    });
+    // Select demo scenario from dropdown by value (scenario ID)
+    await page.selectOption(
+      '[data-testid="scenario-dropdown"]',
+      "regular-question-product",
+    );
 
-    // Wait for form to be auto-filled
-    await page.waitForTimeout(500);
-
-    // Verify form fields are populated
+    // Wait for form fields to be auto-filled (using expect with timeout instead of fixed wait)
     const emailInput = page.locator('[name="email"]');
     const subjectInput = page.locator('[name="subject"]');
     const bodyInput = page.locator('[name="body"]');
 
-    await expect(emailInput).toHaveValue(/.*@.*\..*/); // Valid email format
-    await expect(subjectInput).toHaveValue(/./); // Not empty
-    await expect(bodyInput).toHaveValue(/./); // Not empty
+    // Verify form fields are populated (with timeout)
+    await expect(emailInput).toHaveValue(/.*@.*\..*/, { timeout: 10000 }); // Valid email format
+    await expect(subjectInput).toHaveValue(/.+/, { timeout: 5000 }); // Not empty
+    await expect(bodyInput).toHaveValue(/.+/, { timeout: 5000 }); // Not empty
   });
 
   test("should have submit button enabled when form is filled", async ({
