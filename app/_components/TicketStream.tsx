@@ -124,6 +124,7 @@ export function TicketStream({ ticketId, onReset }: TicketStreamProps) {
                 ? "border-red-300 bg-red-50"
                 : "border-green-300 bg-green-50"
             }`}
+            data-testid="ticket-response"
           >
             {isCritical ? (
               <>

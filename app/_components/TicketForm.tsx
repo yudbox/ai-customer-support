@@ -160,6 +160,7 @@ export function TicketForm({ onSubmitSuccess }: TicketFormProps) {
                 placeholder="Select a scenario to auto-fill..."
                 value={selectedScenario}
                 onChange={handleScenarioChange}
+                data-testid="scenario-dropdown"
               />
             </div>
 
@@ -171,6 +172,7 @@ export function TicketForm({ onSubmitSuccess }: TicketFormProps) {
                 variant="primary"
                 size="md"
                 className="w-full"
+                data-testid="submit-ticket"
               >
                 {createTicketMutation.isPending
                   ? "🔄 Submitting..."
