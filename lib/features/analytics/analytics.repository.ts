@@ -152,7 +152,7 @@ export class AnalyticsRepository {
   ): Promise<PriorityDistributionRow[]> {
     const connection = await getDataSource();
     return connection.query(
-      `SELECT COALESCE(priority, 'unset') as priority, COUNT(*) as count
+      `SELECT COALESCE(priority::text, 'unset') as priority, COUNT(*) as count
        FROM tickets
        WHERE created_at >= $1 AND created_at <= $2
        GROUP BY priority`,

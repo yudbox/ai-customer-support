@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { AgentPerformanceSection } from "@/app/_components/analytics/AgentPerformanceSection";
 import { TicketMetricsSection } from "@/app/_components/analytics/TicketMetricsSection";
 
 function SectionSkeleton({ title }: { title: string }) {
@@ -40,13 +41,9 @@ export default function AnalyticsPage() {
         <TicketMetricsSection from={from} to={to} />
       </Suspense>
 
-      {/* Agent Performance section — PR 4 */}
+      {/* Agent Performance section — PR 4 ✅ */}
       <Suspense fallback={<SectionSkeleton title="Agent Performance" />}>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <p className="text-gray-400 text-sm">
-            🤖 Agent Performance — coming in PR 4
-          </p>
-        </div>
+        <AgentPerformanceSection from={from} to={to} />
       </Suspense>
 
       {/* Cost Tracking section — PR 5 */}
