@@ -35,6 +35,9 @@ const customJestConfig = {
     "!**/__tests__/**",
     "!lib/features/**/__tests__/**",
     "!components/ui/**",
+    "!app/_components/analytics/**", // Covered by unit tests
+    "!app/admin/**", // Covered by unit tests
+    "!lib/features/analytics/**", // Covered by unit tests
   ],
   coverageDirectory: "coverage/integration",
   coverageThreshold: {
