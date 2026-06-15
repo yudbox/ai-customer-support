@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 
+import { TicketMetricsSection } from "@/app/_components/analytics/TicketMetricsSection";
+
 function SectionSkeleton({ title }: { title: string }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
@@ -16,6 +18,11 @@ function SectionSkeleton({ title }: { title: string }) {
 }
 
 export default function AnalyticsPage() {
+  const DAYS_DEFAULT_RANGE = 7;
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - DAYS_DEFAULT_RANGE);
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
       {/* Page header */}
@@ -28,13 +35,9 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      {/* Ticket Metrics section — PR 3 */}
+      {/* Ticket Metrics section — PR 3 ✅ */}
       <Suspense fallback={<SectionSkeleton title="Ticket Metrics" />}>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <p className="text-gray-400 text-sm">
-            🎫 Ticket Metrics — coming in PR 3
-          </p>
-        </div>
+        <TicketMetricsSection from={from} to={to} />
       </Suspense>
 
       {/* Agent Performance section — PR 4 */}
