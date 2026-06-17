@@ -1,3 +1,4 @@
+import { analyticsRouter } from "@/lib/features/analytics";
 import { ticketsRouter } from "@/lib/features/tickets";
 
 import { router } from "../server";
@@ -8,6 +9,7 @@ import { router } from "../server";
  */
 export const appRouter = router({
   tickets: ticketsRouter,
+  analytics: analyticsRouter,
 });
 
 /**
