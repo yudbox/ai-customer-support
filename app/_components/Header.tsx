@@ -14,6 +14,7 @@ export function Header() {
   const navLinks = [
     { href: "/", label: "📝 Submit Ticket" },
     { href: "/manager", label: "👔 Manager Dashboard" },
+    { href: "/admin/analytics", label: "📊 Analytics" },
   ];
 
   return (
