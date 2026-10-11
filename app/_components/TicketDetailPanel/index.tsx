@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { RESOLUTION_MAX_LENGTH } from "@/lib/constants/resolution";
 import { trpc } from "@/lib/trpc/client";
 import { QUERY_PARAMS, TeamCode } from "@/lib/types/common";
 
@@ -62,9 +63,12 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
     },
   });
 
+  const isResolutionInvalid =
+    !resolutionText.trim() || resolutionText.length > RESOLUTION_MAX_LENGTH;
+
   // Handlers
   const handleApprove = () => {
-    if (!resolutionText.trim()) {
+    if (isResolutionInvalid) {
       return;
     }
     setShowApproveModal(true);
@@ -195,7 +199,7 @@ export function TicketDetailPanel({ ticketId }: TicketDetailPanelProps) {
           onReject={handleReject}
           isApproving={approveMutation.isPending}
           isRejecting={rejectMutation.isPending}
-          isApproveDisabled={!resolutionText.trim()}
+          isApproveDisabled={isResolutionInvalid}
         />
       </div>
 

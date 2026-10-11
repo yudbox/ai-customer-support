@@ -5,9 +5,15 @@
  * индикатор статуса, валидация.
  */
 
+import { useState } from "react";
+
 import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { ResolutionEditor } from "@/app/_components/TicketDetailPanel/ResolutionEditor";
+import { RESOLUTION_MAX_LENGTH } from "@/lib/constants/resolution";
+
+const MAX = RESOLUTION_MAX_LENGTH;
 
 // Mock Button component
 jest.mock("@/components/ui/button", () => ({
@@ -36,12 +42,18 @@ jest.mock("@/components/ui/textarea", () => ({
     placeholder,
     rows,
     className,
+    maxLength,
+    "aria-label": ariaLabel,
+    "aria-describedby": ariaDescribedBy,
   }: {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     placeholder?: string;
     rows?: number;
     className?: string;
+    maxLength?: number;
+    "aria-label"?: string;
+    "aria-describedby"?: string;
   }) => {
     return (
       <textarea
@@ -50,6 +62,9 @@ jest.mock("@/components/ui/textarea", () => ({
         placeholder={placeholder}
         rows={rows}
         className={className}
+        maxLength={maxLength}
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
       />
     );
   },
@@ -407,14 +422,14 @@ describe("ResolutionEditor Integration Tests", () => {
     it("should show character count when resolution has text", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="Hello" />);
 
-      expect(screen.getByText("✓ 5 characters")).toBeInTheDocument();
+      expect(screen.getByText(`5 / ${MAX}`)).toBeInTheDocument();
     });
 
-    it("should have green text color when filled", () => {
+    it("should have neutral text color when filled", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="Some text" />);
 
-      const status = screen.getByText(/✓ \d+ characters/);
-      expect(status).toHaveClass("text-green-600", "font-medium");
+      const status = screen.getByText(/^\d+ \/ \d+$/);
+      expect(status).toHaveClass("text-gray-600");
     });
 
     it("should update character count correctly", () => {
@@ -422,19 +437,19 @@ describe("ResolutionEditor Integration Tests", () => {
         <ResolutionEditor {...defaultProps} resolutionText="Hi" />,
       );
 
-      expect(screen.getByText("✓ 2 characters")).toBeInTheDocument();
+      expect(screen.getByText(`2 / ${MAX}`)).toBeInTheDocument();
 
       rerender(
         <ResolutionEditor {...defaultProps} resolutionText="Hello World" />,
       );
 
-      expect(screen.getByText("✓ 11 characters")).toBeInTheDocument();
+      expect(screen.getByText(`11 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should count all characters including spaces", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="a b c d" />);
 
-      expect(screen.getByText("✓ 7 characters")).toBeInTheDocument();
+      expect(screen.getByText(`7 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should count all characters in multiline text", () => {
@@ -442,26 +457,26 @@ describe("ResolutionEditor Integration Tests", () => {
         <ResolutionEditor {...defaultProps} resolutionText="Line1 Line2" />,
       );
 
-      expect(screen.getByText("✓ 11 characters")).toBeInTheDocument();
+      expect(screen.getByText(`11 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should show 1 character for single character", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="A" />);
 
-      expect(screen.getByText("✓ 1 characters")).toBeInTheDocument();
+      expect(screen.getByText(`1 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should handle long text character count", () => {
       const longText = "A".repeat(500);
       render(<ResolutionEditor {...defaultProps} resolutionText={longText} />);
 
-      expect(screen.getByText("✓ 500 characters")).toBeInTheDocument();
+      expect(screen.getByText(`500 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should not show character count for whitespace-only text", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="   " />);
 
-      expect(screen.queryByText(/✓ \d+ characters/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^\d+ \/ \d+$/)).not.toBeInTheDocument();
       expect(screen.getByText("⚠️ Resolution required")).toBeInTheDocument();
     });
   });
@@ -555,7 +570,7 @@ describe("ResolutionEditor Integration Tests", () => {
         /Enter resolution/i,
       ) as HTMLTextAreaElement;
       expect(textarea.value).toBe("  Text with spaces");
-      expect(screen.getByText("✓ 18 characters")).toBeInTheDocument();
+      expect(screen.getByText(`18 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should handle text with trailing whitespace", () => {
@@ -570,7 +585,7 @@ describe("ResolutionEditor Integration Tests", () => {
         /Enter resolution/i,
       ) as HTMLTextAreaElement;
       expect(textarea.value).toBe("Text with spaces  ");
-      expect(screen.getByText("✓ 18 characters")).toBeInTheDocument();
+      expect(screen.getByText(`18 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should handle very long resolution text", () => {
@@ -581,7 +596,8 @@ describe("ResolutionEditor Integration Tests", () => {
         /Enter resolution/i,
       ) as HTMLTextAreaElement;
       expect(textarea.value).toBe(longText);
-      expect(screen.getByText("✓ 10000 characters")).toBeInTheDocument();
+      expect(screen.getByText(`10000 / ${MAX}`)).toBeInTheDocument();
+      expect(screen.getByText("Over limit")).toBeInTheDocument();
     });
 
     it("should handle text with only spaces", () => {
@@ -593,7 +609,7 @@ describe("ResolutionEditor Integration Tests", () => {
     it("should handle text with leading spaces", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="    Text" />);
 
-      expect(screen.getByText("✓ 8 characters")).toBeInTheDocument();
+      expect(screen.getByText(`8 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should handle rapid button clicks", () => {
@@ -648,7 +664,7 @@ describe("ResolutionEditor Integration Tests", () => {
       expect(
         screen.queryByText("⚠️ Resolution required"),
       ).not.toBeInTheDocument();
-      expect(screen.getByText("✓ 10 characters")).toBeInTheDocument();
+      expect(screen.getByText(`10 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("should transition from filled to empty state", () => {
@@ -656,11 +672,11 @@ describe("ResolutionEditor Integration Tests", () => {
         <ResolutionEditor {...defaultProps} resolutionText="Some text" />,
       );
 
-      expect(screen.getByText("✓ 9 characters")).toBeInTheDocument();
+      expect(screen.getByText(`9 / ${MAX}`)).toBeInTheDocument();
 
       rerender(<ResolutionEditor {...defaultProps} resolutionText="" />);
 
-      expect(screen.queryByText(/✓ \d+ characters/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^\d+ \/ \d+$/)).not.toBeInTheDocument();
       expect(screen.getByText("⚠️ Resolution required")).toBeInTheDocument();
     });
 
@@ -669,11 +685,11 @@ describe("ResolutionEditor Integration Tests", () => {
         <ResolutionEditor {...defaultProps} resolutionText="Valid text" />,
       );
 
-      expect(screen.getByText("✓ 10 characters")).toBeInTheDocument();
+      expect(screen.getByText(`10 / ${MAX}`)).toBeInTheDocument();
 
       rerender(<ResolutionEditor {...defaultProps} resolutionText="   " />);
 
-      expect(screen.queryByText(/✓ \d+ characters/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/^\d+ \/ \d+$/)).not.toBeInTheDocument();
       expect(screen.getByText("⚠️ Resolution required")).toBeInTheDocument();
     });
 
@@ -682,17 +698,17 @@ describe("ResolutionEditor Integration Tests", () => {
         <ResolutionEditor {...defaultProps} resolutionText="Hi" />,
       );
 
-      expect(screen.getByText("✓ 2 characters")).toBeInTheDocument();
+      expect(screen.getByText(`2 / ${MAX}`)).toBeInTheDocument();
 
       rerender(<ResolutionEditor {...defaultProps} resolutionText="Hello" />);
 
-      expect(screen.getByText("✓ 5 characters")).toBeInTheDocument();
+      expect(screen.getByText(`5 / ${MAX}`)).toBeInTheDocument();
 
       rerender(
         <ResolutionEditor {...defaultProps} resolutionText="Hello World!" />,
       );
 
-      expect(screen.getByText("✓ 12 characters")).toBeInTheDocument();
+      expect(screen.getByText(`12 / ${MAX}`)).toBeInTheDocument();
     });
   });
 
@@ -724,6 +740,39 @@ describe("ResolutionEditor Integration Tests", () => {
 
       const heading = screen.getByText("✍️ Resolution");
       expect(heading.tagName).toBe("H2");
+    });
+  });
+
+  describe("Resolution limit flow", () => {
+    function StatefulEditor({ suggestion }: { suggestion: string }) {
+      const [text, setText] = useState("");
+      return (
+        <ResolutionEditor
+          resolutionText={text}
+          onResolutionChange={setText}
+          suggestedSolution={suggestion}
+        />
+      );
+    }
+
+    it("truncates a long AI solution, shows the notice, and clears it on edit", async () => {
+      const user = userEvent.setup();
+      render(<StatefulEditor suggestion={"B".repeat(MAX + 10)} />);
+
+      await user.click(
+        screen.getByRole("button", { name: /use ai solution/i }),
+      );
+
+      expect(screen.getByText(`${MAX} / ${MAX}`)).toBeInTheDocument();
+      expect(screen.getByText("Limit reached")).toBeInTheDocument();
+      const notice = `AI solution shortened to ${MAX} characters`;
+      expect(screen.getByText(notice)).toBeInTheDocument();
+
+      const textarea = screen.getByRole("textbox", { name: /resolution/i });
+      await user.type(textarea, "{Backspace}");
+
+      expect(screen.queryByText(notice)).not.toBeInTheDocument();
+      expect(screen.getByText(`${MAX - 1} / ${MAX}`)).toBeInTheDocument();
     });
   });
 });
