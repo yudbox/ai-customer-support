@@ -1,6 +1,9 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 
 import { ResolutionEditor } from "@/app/_components/TicketDetailPanel/ResolutionEditor";
+import { RESOLUTION_MAX_LENGTH } from "@/lib/constants/resolution";
+
+const MAX = RESOLUTION_MAX_LENGTH;
 
 describe("ResolutionEditor Component", () => {
   const mockOnResolutionChange = jest.fn();
@@ -311,7 +314,7 @@ Line 3`;
         <ResolutionEditor {...defaultProps} resolutionText="Hello World" />,
       );
 
-      expect(screen.getByText("✓ 11 characters")).toBeInTheDocument();
+      expect(screen.getByText(`11 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("displays warning when text is empty", () => {
@@ -330,20 +333,20 @@ Line 3`;
       render(<ResolutionEditor {...defaultProps} resolutionText="  Hello  " />);
 
       // Text has 9 characters total (including spaces), but trim() removes them
-      expect(screen.getByText("✓ 9 characters")).toBeInTheDocument();
+      expect(screen.getByText(`9 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("displays correct count for very long text", () => {
       const longText = "A".repeat(1000);
       render(<ResolutionEditor {...defaultProps} resolutionText={longText} />);
 
-      expect(screen.getByText("✓ 1000 characters")).toBeInTheDocument();
+      expect(screen.getByText(`1000 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("displays correct count for single character", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="X" />);
 
-      expect(screen.getByText("✓ 1 characters")).toBeInTheDocument();
+      expect(screen.getByText(`1 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("displays count including newlines and special characters", () => {
@@ -358,7 +361,7 @@ Line2
       );
 
       // Real newlines: 5 + 1 + 5 + 1 + 3 = 15 characters
-      expect(screen.getByText("✓ 15 characters")).toBeInTheDocument();
+      expect(screen.getByText(`15 / ${MAX}`)).toBeInTheDocument();
     });
 
     it("counts emoji correctly", () => {
@@ -366,21 +369,19 @@ Line2
 
       // Emoji can be 2 code units each, but length counts code units
       const text = "🚀🎉";
-      expect(
-        screen.getByText(`✓ ${text.length} characters`),
-      ).toBeInTheDocument();
+      expect(screen.getByText(`${text.length} / ${MAX}`)).toBeInTheDocument();
     });
   });
 
   describe("Character Counter Styling", () => {
-    it("displays green text when resolution is present", () => {
+    it("displays neutral text when resolution is present", () => {
       render(
         <ResolutionEditor {...defaultProps} resolutionText="Valid text" />,
       );
 
-      const counter = screen.getByText(/✓ \d+ characters/);
-      expect(counter).toHaveClass("text-green-600");
-      expect(counter).toHaveClass("font-medium");
+      const counter = screen.getByText(/^\d+ \/ \d+$/);
+      expect(counter).toHaveClass("text-gray-600");
+      expect(counter).not.toHaveClass("text-red-500");
     });
 
     it("displays red text when resolution is empty", () => {
@@ -397,17 +398,17 @@ Line2
       expect(warning).toHaveClass("text-red-500");
     });
 
-    it("displays green text for text with leading/trailing whitespace but valid content", () => {
+    it("displays neutral text for text with leading/trailing whitespace but valid content", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="  valid  " />);
 
-      const counter = screen.getByText(/✓ \d+ characters/);
-      expect(counter).toHaveClass("text-green-600");
+      const counter = screen.getByText(/^\d+ \/ \d+$/);
+      expect(counter).toHaveClass("text-gray-600");
     });
 
     it("counter has xs text size", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="Some text" />);
 
-      const counter = screen.getByText(/✓ \d+ characters/);
+      const counter = screen.getByText(/^\d+ \/ \d+$/);
       expect(counter).toHaveClass("text-xs");
     });
   });
@@ -471,8 +472,8 @@ Line2
     it("character counter is in flex container", () => {
       render(<ResolutionEditor {...defaultProps} resolutionText="Text" />);
 
-      const counter = screen.getByText(/✓ \d+ characters/);
-      const counterContainer = counter.parentElement;
+      const counter = screen.getByText(/^\d+ \/ \d+$/);
+      const counterContainer = counter.closest("div");
 
       expect(counterContainer).toHaveClass("flex");
       expect(counterContainer).toHaveClass("items-center");
@@ -491,7 +492,10 @@ Line2
       const button = screen.getByRole("button", { name: /use ai solution/i });
       fireEvent.click(button);
 
-      expect(mockOnResolutionChange).toHaveBeenCalledWith(longSolution);
+      expect(mockOnResolutionChange).toHaveBeenCalledWith(
+        longSolution.slice(0, MAX),
+      );
+      expect(mockOnResolutionChange.mock.calls[0][0]).toHaveLength(MAX);
     });
 
     it("handles suggestedSolution with special characters", () => {
@@ -658,7 +662,7 @@ Line2
         <ResolutionEditor {...defaultProps} resolutionText="New text" />,
       );
 
-      expect(screen.getByText("✓ 8 characters")).toBeInTheDocument();
+      expect(screen.getByText(`8 / ${MAX}`)).toBeInTheDocument();
     });
   });
 
@@ -693,7 +697,7 @@ Line2
       render(<ResolutionEditor {...defaultProps} resolutionText="Valid" />);
 
       expect(screen.getByRole("textbox")).toHaveValue("Valid");
-      expect(screen.getByText("✓ 5 characters")).toBeInTheDocument();
+      expect(screen.getByText(`5 / ${MAX}`)).toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: /use ai solution/i }),
       ).not.toBeInTheDocument();
@@ -709,10 +713,320 @@ Line2
       );
 
       expect(screen.getByRole("textbox")).toHaveValue("Valid");
-      expect(screen.getByText("✓ 5 characters")).toBeInTheDocument();
+      expect(screen.getByText(`5 / ${MAX}`)).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /use ai solution/i }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("Resolution limit (AC-1 to AC-18)", () => {
+    const ai = (n: number) => "B".repeat(n);
+    const liveText = () => screen.getByRole("status").textContent;
+
+    it("AC-1/AC-2: textarea has maxlength from the shared constant", () => {
+      render(<ResolutionEditor {...defaultProps} />);
+      expect(screen.getByRole("textbox")).toHaveAttribute(
+        "maxlength",
+        String(RESOLUTION_MAX_LENGTH),
+      );
+    });
+
+    describe("Use AI Solution", () => {
+      it("AC-4/AC-6: truncates a long suggestion and shows the notice", () => {
+        const { rerender } = render(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText=""
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /use ai/i }));
+        expect(mockOnResolutionChange).toHaveBeenCalledWith(ai(MAX));
+
+        rerender(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText={ai(MAX)}
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        const notice = screen.getByText(
+          `AI solution shortened to ${MAX} characters`,
+        );
+        expect(notice).toBeInTheDocument();
+        expect(
+          screen.getByRole("textbox").getAttribute("aria-describedby"),
+        ).toContain(notice.id);
+        expect(liveText()).toContain(
+          `AI solution shortened to ${MAX} characters`,
+        );
+        expect(screen.getByText("Limit reached")).toBeInTheDocument();
+      });
+
+      it("AC-5: exactly-limit suggestion is passed unchanged, no notice", () => {
+        const { rerender } = render(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText=""
+            suggestedSolution={ai(MAX)}
+          />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /use ai/i }));
+        expect(mockOnResolutionChange).toHaveBeenCalledWith(ai(MAX));
+        rerender(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText={ai(MAX)}
+            suggestedSolution={ai(MAX)}
+          />,
+        );
+        expect(
+          screen.queryByText(`AI solution shortened to ${MAX} characters`),
+        ).not.toBeInTheDocument();
+      });
+
+      it("AC-5: short suggestion is passed unchanged, no notice", () => {
+        render(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText=""
+            suggestedSolution={ai(100)}
+          />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /use ai/i }));
+        expect(mockOnResolutionChange).toHaveBeenCalledWith(ai(100));
+        expect(
+          screen.queryByText(`AI solution shortened to ${MAX} characters`),
+        ).not.toBeInTheDocument();
+      });
+
+      it("AC-6: notice disappears after a change event", () => {
+        const { rerender } = render(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText=""
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /use ai/i }));
+        rerender(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText={ai(MAX)}
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        expect(
+          screen.getByText(`AI solution shortened to ${MAX} characters`),
+        ).toBeInTheDocument();
+        fireEvent.change(screen.getByRole("textbox"), {
+          target: { value: ai(MAX - 1) },
+        });
+        expect(
+          screen.queryByText(`AI solution shortened to ${MAX} characters`),
+        ).not.toBeInTheDocument();
+      });
+
+      it("AC-6: notice disappears after Write Custom", () => {
+        const { rerender } = render(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText=""
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /use ai/i }));
+        rerender(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText={ai(MAX)}
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /write custom/i }));
+        expect(
+          screen.queryByText(`AI solution shortened to ${MAX} characters`),
+        ).not.toBeInTheDocument();
+      });
+
+      it("AC-6: notice clears when the parent replaces the text", () => {
+        const { rerender } = render(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText=""
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /use ai/i }));
+        rerender(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText={ai(MAX)}
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        rerender(
+          <ResolutionEditor
+            {...defaultProps}
+            resolutionText="other"
+            suggestedSolution={ai(10000)}
+          />,
+        );
+        expect(
+          screen.queryByText(`AI solution shortened to ${MAX} characters`),
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("AC-7: Write Custom calls onResolutionChange with empty string", () => {
+      render(<ResolutionEditor {...defaultProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /write custom/i }));
+      expect(mockOnResolutionChange).toHaveBeenCalledWith("");
+    });
+
+    it("AC-8: over-limit text shows true length, label and red color", () => {
+      render(<ResolutionEditor {...defaultProps} resolutionText={ai(6200)} />);
+      const counter = screen.getByText(`6200 / ${MAX}`);
+      expect(counter).toHaveClass("text-red-700");
+      expect(screen.getByText("Over limit")).toHaveClass("text-red-700");
+    });
+
+    describe("AC-11/AC-13: thresholds", () => {
+      it("4500 is normal with no label", () => {
+        render(
+          <ResolutionEditor {...defaultProps} resolutionText={ai(4500)} />,
+        );
+        expect(screen.getByText(`4500 / ${MAX}`)).toHaveClass("text-gray-600");
+        expect(screen.queryByText("Approaching limit")).not.toBeInTheDocument();
+        expect(screen.queryByText("Limit reached")).not.toBeInTheDocument();
+      });
+
+      it.each([4501, 4600, 4999])("%i is warning", (n) => {
+        render(<ResolutionEditor {...defaultProps} resolutionText={ai(n)} />);
+        expect(screen.getByText(`${n} / ${MAX}`)).toHaveClass(
+          "text-orange-700",
+        );
+        expect(screen.getByText("Approaching limit")).toBeInTheDocument();
+      });
+
+      it("5000 is limit reached", () => {
+        render(
+          <ResolutionEditor {...defaultProps} resolutionText={ai(5000)} />,
+        );
+        expect(screen.getByText(`5000 / ${MAX}`)).toHaveClass("text-red-700");
+        expect(screen.getByText("Limit reached")).toBeInTheDocument();
+      });
+
+      it("100 shows neither label", () => {
+        render(<ResolutionEditor {...defaultProps} resolutionText={ai(100)} />);
+        expect(screen.queryByText("Approaching limit")).not.toBeInTheDocument();
+        expect(screen.queryByText("Limit reached")).not.toBeInTheDocument();
+      });
+    });
+
+    describe("AC-12: length measure", () => {
+      it.each([
+        ["😀", 2],
+        ["Hello\nWorld", 11],
+        ["  abc  ", 7],
+      ])("%j counts as %i", (text, n) => {
+        render(<ResolutionEditor {...defaultProps} resolutionText={text} />);
+        expect(screen.getByText(`${n} / ${MAX}`)).toBeInTheDocument();
+      });
+    });
+
+    it("AC-10: whitespace near the limit still shows required, no counter", () => {
+      render(
+        <ResolutionEditor
+          {...defaultProps}
+          resolutionText={" ".repeat(4600)}
+        />,
+      );
+      expect(screen.getByText("⚠️ Resolution required")).toBeInTheDocument();
+      expect(screen.queryByText(/ \/ \d+/)).not.toBeInTheDocument();
+    });
+
+    describe("AC-14/AC-15: live region", () => {
+      const renderAt = (n: number) => (
+        <ResolutionEditor {...defaultProps} resolutionText={ai(n)} />
+      );
+
+      it("AC-15: does not change between keystrokes within a state", () => {
+        const { rerender } = render(renderAt(4600));
+        const before = liveText();
+        rerender(renderAt(4601));
+        rerender(renderAt(4602));
+        expect(liveText()).toBe(before);
+      });
+
+      it("announces normal to warning", () => {
+        const { rerender } = render(renderAt(4500));
+        rerender(renderAt(4501));
+        expect(liveText()).toBe(
+          `Approaching limit: 4501 of ${MAX} characters used`,
+        );
+      });
+
+      it("announces warning to limit", () => {
+        const { rerender } = render(renderAt(4999));
+        rerender(renderAt(5000));
+        expect(liveText()).toBe(
+          `Limit reached: 5000 of ${MAX} characters used`,
+        );
+      });
+
+      it("announces limit to warning", () => {
+        const { rerender } = render(renderAt(5000));
+        rerender(renderAt(4999));
+        expect(liveText()).toBe(
+          `Approaching limit: 4999 of ${MAX} characters used`,
+        );
+      });
+
+      it("announces warning to normal", () => {
+        const { rerender } = render(renderAt(4501));
+        rerender(renderAt(4500));
+        expect(liveText()).toBe(`Within limit: 4500 of ${MAX} characters used`);
+      });
+
+      it("announces limit to over", () => {
+        const { rerender } = render(renderAt(5000));
+        rerender(renderAt(6200));
+        expect(liveText()).toBe(`Over limit: 6200 of ${MAX} characters used`);
+      });
+
+      it("does not announce required to first character", () => {
+        const { rerender } = render(
+          <ResolutionEditor {...defaultProps} resolutionText="" />,
+        );
+        rerender(<ResolutionEditor {...defaultProps} resolutionText="a" />);
+        expect(liveText()).toBe("");
+      });
+    });
+
+    describe("AC-16/AC-17: name and description", () => {
+      it("textbox has the accessible name Resolution", () => {
+        render(
+          <ResolutionEditor {...defaultProps} resolutionText="Hello world" />,
+        );
+        expect(
+          screen.getByRole("textbox", { name: /resolution/i }),
+        ).toBeInTheDocument();
+      });
+
+      it("aria-describedby references the counter", () => {
+        render(
+          <ResolutionEditor {...defaultProps} resolutionText="Hello world" />,
+        );
+        const box = screen.getByRole("textbox", { name: /resolution/i });
+        const counterId = screen.getByText(`11 / ${MAX}`).parentElement?.id;
+        expect(counterId).toBeTruthy();
+        expect(box.getAttribute("aria-describedby")).toContain(counterId);
+        expect(box).toHaveAccessibleDescription(
+          new RegExp(`11 of ${MAX} characters`),
+        );
+      });
     });
   });
 });
